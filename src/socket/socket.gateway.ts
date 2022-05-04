@@ -52,6 +52,7 @@ export class SocketGateway
   handleSelectPlayer(
     @MessageBody() data: { name: string },
   ): WsResponse<GameModel> {
+    console.log('selectPlayer', data.name);
     return {
       event: 'selectPlayer',
       data: this.gameService.selectPlayer(data.name),
@@ -60,6 +61,7 @@ export class SocketGateway
 
   @SubscribeMessage('startGame')
   handleStartGame(@MessageBody() data: any): WsResponse<GameModel> {
+    console.log('startGame');
     this.gameService.startGame();
     return { event: 'startGame', data: this.game };
   }
@@ -93,6 +95,7 @@ export class SocketGateway
 
   @SubscribeMessage('refresh')
   handleRefresh(game): WsResponse<GameModel> {
+    console.log('refresh');
     return { event: 'refresh', data: game };
   }
 
@@ -144,6 +147,7 @@ export class SocketGateway
 
   @SubscribeMessage('resetGame')
   handleResetGame(@MessageBody() data: any): WsResponse<GameModel> {
+    console.log('resetGame');
     const resetGame = this.gameService.resetGame();
     return { event: 'resetGame', data: resetGame };
   }

@@ -14,7 +14,7 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
+      selected: true,
     },
     {
       name: 'Jonathan',
@@ -22,7 +22,7 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
+      selected: true,
     },
     {
       name: 'Sarah',
@@ -34,11 +34,11 @@ const initGame: GameModel = {
     },
     {
       name: 'Brian',
-      mac: '',
+      mac: '0013a20041a72956',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
+      selected: true,
     },
   ],
   rooms: [
@@ -51,7 +51,7 @@ const initGame: GameModel = {
 };
 @Injectable()
 export class GameService {
-  game: GameModel;
+  game: GameModel = initGame;
   private subjectGame: BehaviorSubject<GameModel> =
     new BehaviorSubject<GameModel>(initGame);
   public observableGame: Observable<GameModel> =
@@ -78,29 +78,38 @@ export class GameService {
     return this.game.players.findIndex((player) => player.name === name);
   }
 
-  private getIndexRoom(name: string) {
-    return this.game.rooms.findIndex((room) => room.name === name);
+  private getIndexRoom(mac: string) {
+    return this.game.rooms.findIndex((room) => room.mac === mac);
   }
 
-  public deathPlayer(name: string): { name: string; mac: string } {
-    const index = this.getIndexPlayer(name);
+  private getIndexPlayerByMac(mac: string) {
+    return this.game.players.findIndex((player) => player.mac === mac);
+  }
+
+  public deathPlayer(mac: string): {
+    name: string;
+    mac: string;
+    isAlive: boolean;
+  } {
+    const index = this.getIndexPlayerByMac(mac);
     this.game.players[index].isAlive = false;
     this.subjectGame.next(this.game);
     return {
       name: this.game.players[index].name,
       mac: this.game.players[index].mac,
+      isAlive: this.game.players[index].isAlive,
     };
   }
 
   public accomplishedTask(
-    name: string,
+    mac: string,
     status: boolean,
   ): {
     name: string;
     mac: string;
     task: boolean;
   } {
-    const index = this.getIndexRoom(name);
+    const index = this.getIndexRoom(mac);
     this.game.rooms[index].task = status;
     this.subjectGame.next(this.game);
     return {
@@ -114,8 +123,8 @@ export class GameService {
     return this.game;
   }
 
-  public buzzer(mac: string, status: boolean) {
-    this.game.buzzer.isActive = status;
+  public buzzer(mac: string) {
+    this.game.buzzer.isActive = true;
     return { mac: this.game.buzzer.mac, status: this.game.buzzer.isActive };
   }
 
@@ -132,5 +141,41 @@ export class GameService {
     this.game.players[3].report = false;
     this.game.players[2].report = false;
     this.subjectGame.next(this.game);
+  }
+
+  public resetBuzzer() {
+    this.game.buzzer.isActive = false;
+    this.subjectGame.next(this.game);
+  }
+
+  public resetGame(): GameModel {
+    this.game = initGame;
+    this.subjectGame.next(this.game);
+    return this.game;
+  }
+
+  public winSaboteur(): boolean {
+    const playersAlive = this.game.players.filter((player) => player.isAlive);
+    if (playersAlive.length <= 2) {
+      if (
+        playersAlive.some(
+          (playerAlive) => playerAlive.role === RolePlayer.SABOTEUR,
+        )
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public winPlayers(): boolean {
+    if (
+      this.game.players.some(
+        (player) => !player.isAlive && player.role === RolePlayer.SABOTEUR,
+      )
+    ) {
+      return true;
+    }
+    return this.game.rooms.every((room) => room.task);
   }
 }

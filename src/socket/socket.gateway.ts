@@ -1,16 +1,17 @@
 import {
-  SubscribeMessage,
-  WebSocketGateway,
-  OnGatewayInit,
-  WebSocketServer,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  WsResponse,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { Socket, Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
-import { GameModel } from './models/game.model';
+import { GameModel, RolePlayer } from './models/game.model';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -20,6 +21,13 @@ export class SocketGateway
   constructor(private readonly gameService: GameService) {
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
+      if (this.gameService.winSaboteur()) {
+        this.gameService.resetGame();
+        this.handleVictory(RolePlayer.SABOTEUR);
+      } else if (this.gameService.winPlayers()) {
+        this.gameService.resetGame();
+        this.handleVictory(RolePlayer.PLAYER);
+      }
     });
   }
 
@@ -32,64 +40,88 @@ export class SocketGateway
   }
 
   @SubscribeMessage('initGame')
-  handleInitGame(@MessageBody() data: any): GameModel {
-    return this.game;
+  handleInitGame(@MessageBody() data: any): WsResponse<GameModel> {
+    console.log('Init Game');
+    return { event: 'initGame', data: this.game };
+  }
+
+  @SubscribeMessage('win')
+  handleVictory(role: RolePlayer) {
+    this.server.emit('win', role);
+    return { event: 'win', data: role };
   }
 
   @SubscribeMessage('selectPlayer')
-  handleSelectPlayer(@MessageBody() data: { name: string }): GameModel {
-    return this.gameService.selectPlayer(data.name);
+  handleSelectPlayer(
+    @MessageBody() data: { name: string },
+  ): WsResponse<GameModel> {
+    return {
+      event: 'selectPlayer',
+      data: this.gameService.selectPlayer(data.name),
+    };
   }
 
   @SubscribeMessage('startGame')
-  handleStartGame(@MessageBody() data: any): GameModel {
+  handleStartGame(@MessageBody() data: any): WsResponse<GameModel> {
     this.gameService.startGame();
-    return this.game;
+    return { event: 'startGame', data: this.game };
   }
 
   @SubscribeMessage('deathPlayer')
-  handleDeathPlayer(@MessageBody() data: { name: string }): {
+  handleDeathPlayer(@MessageBody() data: { mac: string }): WsResponse<{
     name: string;
     mac: string;
-  } {
-    return this.gameService.deathPlayer(data.name);
+    isAlive: boolean;
+  }> {
+    console.log('deathPlayer', data);
+    return {
+      event: 'deathPlayer',
+      data: this.gameService.deathPlayer(data.mac),
+    };
   }
 
   @SubscribeMessage('task')
-  handleTask(@MessageBody() data: { name: string; status: boolean }): {
+  handleTask(
+    @MessageBody() data: { mac: string; status: boolean },
+  ): WsResponse<{
     name: string;
     mac: string;
     task: boolean;
-  } {
-    const task = this.gameService.accomplishedTask(data.name, data.status);
+  }> {
+    console.log('task', data);
+    const task = this.gameService.accomplishedTask(data.mac, data.status);
     this.handleRefresh(this.gameService.getGame());
-    return task;
+    return { event: 'task', data: task };
   }
 
   @SubscribeMessage('refresh')
-  handleRefresh(game): GameModel {
-    return game;
+  handleRefresh(game): WsResponse<GameModel> {
+    return { event: 'refresh', data: game };
   }
 
   @SubscribeMessage('buzzer')
-  handleBuzzer(@MessageBody() data: { mac: string; status: boolean }): {
+  handleBuzzer(
+    @MessageBody() data: { mac: string; status: boolean },
+  ): WsResponse<{
     mac: string;
     status: boolean;
-  } {
-    const buzzer = this.gameService.buzzer(data.mac, data.status);
+  }> {
+    const buzzer = this.gameService.buzzer(data.mac);
     this.handleRefresh(this.gameService.getGame());
-    this.countDownMeeting(data.status);
-    return buzzer;
+    console.log('buzzer');
+    this.countDownMeeting(buzzer.status);
+    return { event: 'buzzer', data: buzzer };
   }
 
   countDownMeeting(status: boolean): { status: boolean; countDown: number } {
-    let counter = 60;
+    let counter = 10;
     if (status) {
       const functionCounter = setInterval(() => {
         this.handleMeeting(counter, status);
         counter--;
         if (counter === 0) {
           this.handleMeeting(counter, false);
+          this.gameService.resetBuzzer();
           this.gameService.resetReport();
           clearInterval(functionCounter);
         }
@@ -100,18 +132,23 @@ export class SocketGateway
   }
 
   @SubscribeMessage('meeting')
-  handleMeeting(
-    counter: number,
-    status: boolean,
-  ): { status: boolean; countDown: number } {
-    return { countDown: counter, status };
+  handleMeeting(counter: number, status: boolean) {
+    console.log('meeting', { countDown: counter, status });
+    this.server.emit('meeting', { countDown: counter, status });
   }
 
   @SubscribeMessage('report')
-  handleReport(@MessageBody() data: { name: string }) {
+  handleReport(@MessageBody() data: { name: string }): WsResponse<GameModel> {
     const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
-    return report;
+    return { event: 'report', data: report };
+  }
+
+  @SubscribeMessage('resetGame')
+  handleResetGame(@MessageBody() data: any): WsResponse<GameModel> {
+    const resetGame = this.gameService.resetGame();
+    this.countDownMeeting(true);
+    return { event: 'resetGame', data: resetGame };
   }
 
   handleDisconnect(client: Socket) {

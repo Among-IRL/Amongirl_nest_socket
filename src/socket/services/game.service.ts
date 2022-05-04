@@ -34,7 +34,7 @@ const initGame: GameModel = {
     },
     {
       name: 'Brian',
-      mac: '0013a20041a72956',
+      mac: '',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -42,18 +42,18 @@ const initGame: GameModel = {
     },
   ],
   rooms: [
-    { name: 'ROOM 1', mac: '', task: false },
-    { name: 'ROOM 2', mac: '', task: false },
-    { name: 'ROOM 3', mac: '', task: false },
-    { name: 'ROOM 4', mac: '', task: false },
+    { name: 'ROOM 1', mac: '0013A20041A72956', task: false },
+    { name: 'ROOM 2', mac: '0013A20041A72957', task: false },
+    { name: 'ROOM 3', mac: '0013A20041A72958', task: false },
+    { name: 'ROOM 4', mac: '0013A20041A72959', task: false },
   ],
   start: false,
 };
 @Injectable()
 export class GameService {
-  game: GameModel = initGame;
+  game: GameModel = { ...initGame };
   private subjectGame: BehaviorSubject<GameModel> =
-    new BehaviorSubject<GameModel>(initGame);
+    new BehaviorSubject<GameModel>({ ...initGame });
   public observableGame: Observable<GameModel> =
     this.subjectGame.asObservable();
 
@@ -149,7 +149,53 @@ export class GameService {
   }
 
   public resetGame(): GameModel {
-    this.game = initGame;
+    this.game = {
+      buzzer: {
+        mac: '',
+        isActive: false,
+      },
+      players: [
+        {
+          name: 'Antony',
+          mac: '',
+          role: RolePlayer.PLAYER,
+          report: false,
+          isAlive: true,
+          selected: true,
+        },
+        {
+          name: 'Jonathan',
+          mac: '',
+          role: RolePlayer.PLAYER,
+          report: false,
+          isAlive: true,
+          selected: true,
+        },
+        {
+          name: 'Sarah',
+          mac: '',
+          role: RolePlayer.PLAYER,
+          report: false,
+          isAlive: true,
+          selected: false,
+        },
+        {
+          name: 'Brian',
+          mac: '',
+          role: RolePlayer.PLAYER,
+          report: false,
+          isAlive: true,
+          selected: true,
+        },
+      ],
+      rooms: [
+        { name: 'ROOM 1', mac: '0013A20041A72956', task: false },
+        { name: 'ROOM 2', mac: '0013A20041A72957', task: false },
+        { name: 'ROOM 3', mac: '0013A20041A72958', task: false },
+        { name: 'ROOM 4', mac: '0013A20041A72959', task: false },
+      ],
+      start: false,
+    };
     this.subjectGame.next(this.game);
     return this.game;
   }

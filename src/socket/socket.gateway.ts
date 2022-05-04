@@ -21,10 +21,10 @@ export class SocketGateway
   constructor(private readonly gameService: GameService) {
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
-      if (this.gameService.winSaboteur()) {
+      if (this.gameService.winSaboteur() && game.start) {
         this.gameService.resetGame();
         this.handleVictory(RolePlayer.SABOTEUR);
-      } else if (this.gameService.winPlayers()) {
+      } else if (this.gameService.winPlayers() && game.start) {
         this.gameService.resetGame();
         this.handleVictory(RolePlayer.PLAYER);
       }
@@ -45,12 +45,9 @@ export class SocketGateway
     return { event: 'initGame', data: this.game };
   }
 
-  @SubscribeMessage('win')
   handleVictory(role: RolePlayer) {
     this.server.emit('win', role);
-    return { event: 'win', data: role };
   }
-
   @SubscribeMessage('selectPlayer')
   handleSelectPlayer(
     @MessageBody() data: { name: string },
@@ -139,6 +136,7 @@ export class SocketGateway
 
   @SubscribeMessage('report')
   handleReport(@MessageBody() data: { name: string }): WsResponse<GameModel> {
+    console.log('data name = ', data.name);
     const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
     return { event: 'report', data: report };
@@ -147,7 +145,6 @@ export class SocketGateway
   @SubscribeMessage('resetGame')
   handleResetGame(@MessageBody() data: any): WsResponse<GameModel> {
     const resetGame = this.gameService.resetGame();
-    this.countDownMeeting(true);
     return { event: 'resetGame', data: resetGame };
   }
 

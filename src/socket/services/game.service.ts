@@ -14,7 +14,7 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: true,
+      selected: false,
     },
     {
       name: 'Jonathan',
@@ -22,7 +22,7 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: true,
+      selected: false,
     },
     {
       name: 'Sarah',
@@ -161,7 +161,7 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: true,
+          selected: false,
         },
         {
           name: 'Jonathan',
@@ -169,7 +169,7 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: true,
+          selected: false,
         },
         {
           name: 'Sarah',

@@ -40,83 +40,55 @@ export class SocketGateway
   }
 
   @SubscribeMessage('initGame')
-  handleInitGame(@MessageBody() data: any): WsResponse<GameModel> {
-    console.log('Init Game');
+  handleInitGame(@MessageBody() data: any) {
     this.logger.log('Init Game');
-    return { event: 'initGame', data: this.game };
+    this.server.emit('initGame', this.game);
   }
 
   handleVictory(role: RolePlayer) {
+    this.logger.log('win', role);
     this.server.emit('win', role);
   }
   @SubscribeMessage('selectPlayer')
-  handleSelectPlayer(
-    @MessageBody() data: { name: string },
-  ): WsResponse<GameModel> {
-    console.log('selectPlayer', data.name);
+  handleSelectPlayer(@MessageBody() data: { name: string }) {
     this.logger.log('selectPlayer', data.name);
-    return {
-      event: 'selectPlayer',
-      data: this.gameService.selectPlayer(data.name),
-    };
+    this.server.emit('selectPlayer', this.gameService.selectPlayer(data.name));
   }
 
   @SubscribeMessage('startGame')
-  handleStartGame(@MessageBody() data: any): WsResponse<GameModel> {
+  handleStartGame(@MessageBody() data: any) {
     this.logger.log('startGame');
     this.gameService.startGame();
-    return { event: 'startGame', data: this.game };
+    this.server.emit('startGame', this.game);
   }
 
   @SubscribeMessage('deathPlayer')
-  handleDeathPlayer(@MessageBody() data: { mac: string }): WsResponse<{
-    name: string;
-    mac: string;
-    isAlive: boolean;
-  }> {
-    console.log('deathPlayer', data);
+  handleDeathPlayer(@MessageBody() data: { mac: string }) {
     this.logger.log('deathPlayer', data);
-    return {
-      event: 'deathPlayer',
-      data: this.gameService.deathPlayer(data.mac),
-    };
+    this.server.emit('deathPlayer', this.gameService.deathPlayer(data.mac));
   }
 
   @SubscribeMessage('task')
-  handleTask(
-    @MessageBody() data: { mac: string; status: boolean },
-  ): WsResponse<{
-    name: string;
-    mac: string;
-    task: boolean;
-  }> {
-    console.log('task', data);
+  handleTask(@MessageBody() data: { mac: string; status: boolean }) {
     this.logger.log('task', data);
     const task = this.gameService.accomplishedTask(data.mac, data.status);
     this.handleRefresh(this.gameService.getGame());
-    return { event: 'task', data: task };
+    this.server.emit('task', task);
   }
 
   @SubscribeMessage('refresh')
-  handleRefresh(game): WsResponse<GameModel> {
-    console.log('refresh');
+  handleRefresh(game) {
     this.logger.log('refresh');
-    return { event: 'refresh', data: game };
+    this.server.emit('refresh', game);
   }
 
   @SubscribeMessage('buzzer')
-  handleBuzzer(
-    @MessageBody() data: { mac: string; status: boolean },
-  ): WsResponse<{
-    mac: string;
-    status: boolean;
-  }> {
+  handleBuzzer(@MessageBody() data: { mac: string; status: boolean }) {
     const buzzer = this.gameService.buzzer(data.mac);
     this.handleRefresh(this.gameService.getGame());
-    console.log('buzzer');
     this.logger.log('buzzer');
     this.countDownMeeting(buzzer.status);
-    return { event: 'buzzer', data: buzzer };
+    this.server.emit('buzzer', buzzer);
   }
 
   countDownMeeting(status: boolean): { status: boolean; countDown: number } {
@@ -139,26 +111,23 @@ export class SocketGateway
 
   @SubscribeMessage('meeting')
   handleMeeting(counter: number, status: boolean) {
-    console.log('meeting', { countDown: counter, status });
     this.logger.log('meeting, { countDown: counter, status }');
     this.server.emit('meeting', { countDown: counter, status });
   }
 
   @SubscribeMessage('report')
-  handleReport(@MessageBody() data: { name: string }): WsResponse<GameModel> {
-    console.log('data name = ', data.name);
+  handleReport(@MessageBody() data: { name: string }) {
     this.logger.log('data name = ', data.name);
     const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
-    return { event: 'report', data: report };
+    this.server.emit('report', report);
   }
 
   @SubscribeMessage('resetGame')
-  handleResetGame(@MessageBody() data: any): WsResponse<GameModel> {
-    console.log('resetGame');
+  handleResetGame(@MessageBody() data: any) {
     this.logger.log('resetGame ');
     const resetGame = this.gameService.resetGame();
-    return { event: 'resetGame', data: resetGame };
+    this.server.emit('resetGame', resetGame);
   }
 
   handleDisconnect(client: Socket) {

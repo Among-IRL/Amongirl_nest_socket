@@ -42,6 +42,7 @@ export class SocketGateway
   @SubscribeMessage('initGame')
   handleInitGame(@MessageBody() data: any): WsResponse<GameModel> {
     console.log('Init Game');
+    this.logger.log('Init Game');
     return { event: 'initGame', data: this.game };
   }
 
@@ -53,6 +54,7 @@ export class SocketGateway
     @MessageBody() data: { name: string },
   ): WsResponse<GameModel> {
     console.log('selectPlayer', data.name);
+    this.logger.log('selectPlayer', data.name);
     return {
       event: 'selectPlayer',
       data: this.gameService.selectPlayer(data.name),
@@ -61,7 +63,7 @@ export class SocketGateway
 
   @SubscribeMessage('startGame')
   handleStartGame(@MessageBody() data: any): WsResponse<GameModel> {
-    console.log('startGame');
+    this.logger.log('startGame');
     this.gameService.startGame();
     return { event: 'startGame', data: this.game };
   }
@@ -73,6 +75,7 @@ export class SocketGateway
     isAlive: boolean;
   }> {
     console.log('deathPlayer', data);
+    this.logger.log('deathPlayer', data);
     return {
       event: 'deathPlayer',
       data: this.gameService.deathPlayer(data.mac),
@@ -88,6 +91,7 @@ export class SocketGateway
     task: boolean;
   }> {
     console.log('task', data);
+    this.logger.log('task', data);
     const task = this.gameService.accomplishedTask(data.mac, data.status);
     this.handleRefresh(this.gameService.getGame());
     return { event: 'task', data: task };
@@ -96,6 +100,7 @@ export class SocketGateway
   @SubscribeMessage('refresh')
   handleRefresh(game): WsResponse<GameModel> {
     console.log('refresh');
+    this.logger.log('refresh');
     return { event: 'refresh', data: game };
   }
 
@@ -109,6 +114,7 @@ export class SocketGateway
     const buzzer = this.gameService.buzzer(data.mac);
     this.handleRefresh(this.gameService.getGame());
     console.log('buzzer');
+    this.logger.log('buzzer');
     this.countDownMeeting(buzzer.status);
     return { event: 'buzzer', data: buzzer };
   }
@@ -134,12 +140,14 @@ export class SocketGateway
   @SubscribeMessage('meeting')
   handleMeeting(counter: number, status: boolean) {
     console.log('meeting', { countDown: counter, status });
+    this.logger.log('meeting, { countDown: counter, status }');
     this.server.emit('meeting', { countDown: counter, status });
   }
 
   @SubscribeMessage('report')
   handleReport(@MessageBody() data: { name: string }): WsResponse<GameModel> {
     console.log('data name = ', data.name);
+    this.logger.log('data name = ', data.name);
     const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
     return { event: 'report', data: report };
@@ -148,6 +156,7 @@ export class SocketGateway
   @SubscribeMessage('resetGame')
   handleResetGame(@MessageBody() data: any): WsResponse<GameModel> {
     console.log('resetGame');
+    this.logger.log('resetGame ');
     const resetGame = this.gameService.resetGame();
     return { event: 'resetGame', data: resetGame };
   }

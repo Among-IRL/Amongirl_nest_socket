@@ -4,13 +4,13 @@ import { GameModel, RolePlayer } from '../models/game.model';
 
 const initGame: GameModel = {
   buzzer: {
-    mac: '0013A20041C34AB8',
+    mac: '',
     isActive: false,
   },
   players: [
     {
       name: 'Antony',
-      mac: '0013A20041A72956',
+      mac: '',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -18,7 +18,7 @@ const initGame: GameModel = {
     },
     {
       name: 'Jonathan',
-      mac: '0013A20041582FC0',
+      mac: '',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -26,11 +26,11 @@ const initGame: GameModel = {
     },
     {
       name: 'Sarah',
-      mac: '0013A20041C34AFB',
+      mac: '',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
+      selected: true,
     },
     {
       name: 'Brian',
@@ -42,8 +42,10 @@ const initGame: GameModel = {
     },
   ],
   rooms: [
-    { name: 'ROOM 1', mac: '0013A20041A7133C', task: false },
-    { name: 'ROOM 2', mac: '0013A20041A713BC', task: false },
+    { name: 'ROOM 1', mac: '0013A20041A72956', task: false },
+    { name: 'ROOM 2', mac: '0013A20041A72957', task: false },
+    { name: 'ROOM 3', mac: '0013A20041A72958', task: false },
+    { name: 'ROOM 4', mac: '0013A20041A72959', task: false },
   ],
   start: false,
 };
@@ -56,7 +58,8 @@ export class GameService {
     this.subjectGame.asObservable();
 
   public startGame() {
-    this.game.players[this.random(3)].role = RolePlayer.SABOTEUR;
+    this.game.players[this.random(this.game.players.length)].role =
+      RolePlayer.SABOTEUR;
     this.game.start = true;
     this.subjectGame.next(this.game);
   }
@@ -134,10 +137,12 @@ export class GameService {
   }
 
   public resetReport() {
-    this.game.players[0].report = false;
-    this.game.players[1].report = false;
-    this.game.players[3].report = false;
-    this.game.players[2].report = false;
+    this.game.players.forEach((player) => (player.report = false));
+
+    // this.game.players[0].report = false;
+    // this.game.players[1].report = false;
+    // this.game.players[3].report = false;
+    // this.game.players[2].report = false;
     this.subjectGame.next(this.game);
   }
 
@@ -149,13 +154,13 @@ export class GameService {
   public resetGame(): GameModel {
     this.game = {
       buzzer: {
-        mac: '',
+        mac: '0013a20041582fc1',
         isActive: false,
       },
       players: [
         {
           name: 'Antony',
-          mac: '',
+          mac: '0013a20041582fc0',
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
@@ -163,7 +168,7 @@ export class GameService {
         },
         {
           name: 'Jonathan',
-          mac: '',
+          mac: '0013a20041a72956',
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
@@ -175,22 +180,22 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
+          selected: true,
         },
-        {
-          name: 'Brian',
-          mac: '',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-          selected: false,
-        },
+        // {
+        //   name: 'Brian',
+        //   mac: '0013a20041a72956',
+        //   role: RolePlayer.PLAYER,
+        //   report: false,
+        //   isAlive: true,
+        //   selected: false,
+        // },
       ],
       rooms: [
-        { name: 'ROOM 1', mac: '0013A20041A72956', task: false },
-        { name: 'ROOM 2', mac: '0013A20041A72957', task: false },
-        { name: 'ROOM 3', mac: '0013A20041A72958', task: false },
-        { name: 'ROOM 4', mac: '0013A20041A72959', task: false },
+        { name: 'ROOM 1', mac: '0013a20041582eee', task: false },
+        { name: 'ROOM 2', mac: '0013A20041A72957', task: true },
+        { name: 'ROOM 3', mac: '0013A20041A72958', task: true },
+        { name: 'ROOM 4', mac: '0013A20041A72959', task: true },
       ],
       start: false,
     };

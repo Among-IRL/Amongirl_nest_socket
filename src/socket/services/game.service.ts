@@ -4,13 +4,13 @@ import { GameModel, RolePlayer } from '../models/game.model';
 
 const initGame: GameModel = {
   buzzer: {
-    mac: '',
+    mac: '0013A20041C34AB8',
     isActive: false,
   },
   players: [
     {
       name: 'Antony',
-      mac: '',
+      mac: '0013A20041A72956',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -18,7 +18,7 @@ const initGame: GameModel = {
     },
     {
       name: 'Jonathan',
-      mac: '',
+      mac: '0013A20041582FC0',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -26,7 +26,7 @@ const initGame: GameModel = {
     },
     {
       name: 'Sarah',
-      mac: '',
+      mac: '0013A20041C34AFB',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -34,7 +34,7 @@ const initGame: GameModel = {
     },
     {
       name: 'Brian',
-      mac: '',
+      mac: '0013A20041582EF0',
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
@@ -42,10 +42,8 @@ const initGame: GameModel = {
     },
   ],
   rooms: [
-    { name: 'ROOM 1', mac: '0013A20041A72956', task: false },
-    { name: 'ROOM 2', mac: '0013A20041A72957', task: false },
-    { name: 'ROOM 3', mac: '0013A20041A72958', task: false },
-    { name: 'ROOM 4', mac: '0013A20041A72959', task: false },
+    { name: 'ROOM 1', mac: '0013A20041A7133C', task: false },
+    { name: 'ROOM 2', mac: '0013A20041A713BC', task: false },
   ],
   start: false,
 };

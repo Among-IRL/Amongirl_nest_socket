@@ -138,11 +138,6 @@ export class GameService {
 
   public resetReport() {
     this.game.players.forEach((player) => (player.report = false));
-
-    // this.game.players[0].report = false;
-    // this.game.players[1].report = false;
-    // this.game.players[3].report = false;
-    // this.game.players[2].report = false;
     this.subjectGame.next(this.game);
   }
 

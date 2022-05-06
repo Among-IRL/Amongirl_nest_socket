@@ -92,7 +92,7 @@ export class SocketGateway
   }
 
   countDownMeeting(status: boolean): { status: boolean; countDown: number } {
-    let counter = 10;
+    let counter = 60;
     if (status) {
       const functionCounter = setInterval(() => {
         this.handleMeeting(counter, status);

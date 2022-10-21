@@ -14,7 +14,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
     {
       name: 'Joueur 2',
@@ -22,7 +21,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
     {
       name: 'Joueur 3',
@@ -30,7 +28,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
     {
       name: 'Joueur 4',
@@ -38,7 +35,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
     {
       name: 'Joueur 5',
@@ -46,7 +42,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
     {
       name: 'Joueur 6',
@@ -54,7 +49,6 @@ const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       report: false,
       isAlive: true,
-      selected: false,
     },
   ],
   rooms: [
@@ -95,7 +89,6 @@ export class GameService {
 
   public selectPlayer(name: string): GameModel {
     const index = this.getIndexPlayer(name);
-    this.game.players[index].selected = true;
     this.subjectGame.next(this.game);
     return this.game;
   }
@@ -184,7 +177,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
         {
           name: 'Joueur 2',
@@ -192,7 +184,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
         {
           name: 'Joueur 3',
@@ -200,7 +191,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
         {
           name: 'Joueur 4',
@@ -208,7 +198,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
         {
           name: 'Joueur 5',
@@ -216,7 +205,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
         {
           name: 'Joueur 6',
@@ -224,7 +212,6 @@ export class GameService {
           role: RolePlayer.PLAYER,
           report: false,
           isAlive: true,
-          selected: false,
         },
       ],
       rooms: [

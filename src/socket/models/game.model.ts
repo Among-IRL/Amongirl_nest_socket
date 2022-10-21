@@ -15,7 +15,6 @@ interface Players {
   isAlive: boolean;
   role: RolePlayer;
   report: boolean;
-  selected: boolean;
 }
 
 export interface GameModel {

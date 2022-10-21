@@ -88,7 +88,13 @@ export class GameService {
   }
 
   public selectPlayer(name: string): GameModel {
-    const index = this.getIndexPlayer(name);
+    this.game.players.push({
+      name,
+      mac: '0013a20041c3475c',
+      role: RolePlayer.PLAYER,
+      report: false,
+      isAlive: true
+    })
     this.subjectGame.next(this.game);
     return this.game;
   }

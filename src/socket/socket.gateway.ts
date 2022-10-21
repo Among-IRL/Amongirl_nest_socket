@@ -15,7 +15,8 @@ import { GameModel, RolePlayer } from './models/game.model';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private game: GameModel;
   constructor(private readonly gameService: GameService) {
     this.gameService.observableGame.subscribe((game) => {
@@ -47,6 +48,11 @@ export class SocketGateway
   handleVictory(role: RolePlayer) {
     this.logger.log('win', role);
     this.server.emit('win', role);
+  }
+  @SubscribeMessage('selectPlayer')
+  handleSelectPlayer(@MessageBody() data: { name: string }) {
+    this.logger.log('selectPlayer', data.name);
+    this.server.emit('selectPlayer', this.gameService.selectPlayer(data.name));
   }
 
   @SubscribeMessage('startGame')

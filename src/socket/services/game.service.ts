@@ -12,61 +12,88 @@ const initGame: GameModel = {
       name: 'Joueur 1',
       mac: '0013a20041a72956',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
     {
       name: 'Joueur 2',
       mac: '0013a20041582fc0',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
     {
       name: 'Joueur 3',
       mac: '0013a20041a72913',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
     {
       name: 'Joueur 4',
       mac: '0013a20041e54aeb',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
     {
       name: 'Joueur 5',
       mac: '0013a20041a72961',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
     {
       name: 'Joueur 6',
       mac: '0013a20041c3475c',
       role: RolePlayer.PLAYER,
-      report: false,
+      hasReport: false,
       isAlive: true,
+      personalTasks: [],
     },
   ],
-  rooms: [
+  globalTasks: [
     {
       name: 'Réparer ordinateur de Colombe',
       mac: '0013a20041582eee',
-      task: false,
+      accomplished: false,
     },
-    { name: 'Supprimer les absences', mac: '0013a20041c34ac1', task: false },
-    { name: 'Réparer le robinet', mac: '0013a20041c34b12', task: false },
-    { name: 'Fermer le distributeur de papier', mac: '0013a20041a72946', task: false },
-    { name: 'Réparer la machine à café', mac: '0013a20041a713bc', task: false },
+    {
+      name: 'Supprimer les absences',
+      mac: '0013a20041c34ac1',
+      accomplished: false,
+    },
+    {
+      name: 'Réparer le robinet',
+      mac: '0013a20041c34b12',
+      accomplished: false,
+    },
+    {
+      name: 'Fermer le distributeur de papier',
+      mac: '0013a20041a72946',
+      accomplished: false,
+    },
+    {
+      name: 'Réparer la machine à café',
+      mac: '0013a20041a713bc',
+      accomplished: false,
+    },
     //puce fonctionne pas
     // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-    { name: 'Ranger les affaires IOT', mac: '0013a20041582fb1', task: false },
+    {
+      name: 'Ranger les affaires IOT',
+      mac: '0013a20041582fb1',
+      accomplished: false,
+    },
     // { name: 'Réparer le ditributeur', mac: '', task: false },
   ],
   start: false,
+  vote: [],
 };
 @Injectable()
 export class GameService {
@@ -87,16 +114,39 @@ export class GameService {
     return Math.floor(Math.random() * max);
   }
 
-  public selectPlayer(name: string): GameModel {
-    this.game.players.push({
+  public selectPlayer(name: string) {
+    const player = {
       name,
       mac: '0013a20041c3475c',
       role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true
-    })
+      hasReport: false,
+      isAlive: true,
+      personalTasks: [
+        // {
+        //   name: 'Réparer ordinateur de Colombe',
+        //   mac: '0013a20041582eee',
+        //   accomplished: false,
+        // },
+        // {
+        //   name: 'Réparer ordinateur de Colombe',
+        //   mac: '0013a20041582eee',
+        //   accomplished: false,
+        // },
+        // {
+        //   name: 'Réparer ordinateur de Colombe',
+        //   mac: '0013a20041582eee',
+        //   accomplished: false,
+        // },
+        // {
+        //   name: 'Réparer ordinateur de Colombe',
+        //   mac: '0013a20041582eee',
+        //   accomplished: false,
+        // },
+      ],
+    };
+    this.game.players.push(player);
     this.subjectGame.next(this.game);
-    return this.game;
+    return { game: this.game, currentPlayer: player };
   }
 
   private getIndexPlayer(name: string) {
@@ -104,11 +154,20 @@ export class GameService {
   }
 
   private getIndexRoom(mac: string) {
-    return this.game.rooms.findIndex((room) => room.mac === mac);
+    return this.game.globalTasks.findIndex((room) => room.mac === mac);
   }
 
   private getIndexPlayerByMac(mac: string) {
     return this.game.players.findIndex((player) => player.mac === mac);
+  }
+
+  public getPlayerByMac(mac: string) {
+    console.log('mac = ', mac);
+
+    return this.game.players.find((player) => {
+      console.log(player + '\n');
+      return player.mac === mac;
+    });
   }
 
   public deathPlayer(mac: string): {
@@ -132,15 +191,15 @@ export class GameService {
   ): {
     name: string;
     mac: string;
-    task: boolean;
+    accomplished: boolean;
   } {
     const index = this.getIndexRoom(mac);
-    this.game.rooms[index].task = status;
+    this.game.globalTasks[index].accomplished = status;
     this.subjectGame.next(this.game);
     return {
-      name: this.game.rooms[index].name,
-      mac: this.game.rooms[index].mac,
-      task: this.game.rooms[index].task,
+      name: this.game.globalTasks[index].name,
+      mac: this.game.globalTasks[index].mac,
+      accomplished: this.game.globalTasks[index].accomplished,
     };
   }
 
@@ -155,19 +214,23 @@ export class GameService {
 
   public report(name: string): GameModel {
     const index = this.getIndexPlayer(name);
-    this.game.players[index].report = true;
+    this.game.players[index].hasReport = true;
     this.subjectGame.next(this.game);
     return this.game;
   }
 
   public resetReport() {
-    this.game.players.forEach((player) => (player.report = false));
+    this.game.players.forEach((player) => (player.hasReport = false));
     this.subjectGame.next(this.game);
   }
 
   public resetBuzzer() {
     this.game.buzzer.isActive = false;
     this.subjectGame.next(this.game);
+  }
+
+  public resetVote() {
+    this.game.vote = [];
   }
 
   public resetGame(): GameModel {
@@ -181,69 +244,88 @@ export class GameService {
           name: 'Joueur 1',
           mac: '0013a20041a72956',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
         {
           name: 'Joueur 2',
           mac: '0013a20041582fc0',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
         {
           name: 'Joueur 3',
           mac: '0013a20041a72913',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
         {
           name: 'Joueur 4',
           mac: '0013a20041e54aeb',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
         {
           name: 'Joueur 5',
           mac: '0013a20041a72961',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
         {
           name: 'Joueur 6',
           mac: '0013a20041c3475c',
           role: RolePlayer.PLAYER,
-          report: false,
+          hasReport: false,
           isAlive: true,
+          personalTasks: [],
         },
       ],
-      rooms: [
+      globalTasks: [
         {
           name: 'Réparer ordinateur de Colombe',
           mac: '0013a20041582eee',
-          task: false,
+          accomplished: false,
         },
         {
           name: 'Supprimer les absences',
           mac: '0013a20041c34ac1',
-          task: false,
+          accomplished: false,
         },
-        { name: 'Réparer le robinet', mac: '0013a20041c34b12', task: false },
+        {
+          name: 'Réparer le robinet',
+          mac: '0013a20041c34b12',
+          accomplished: false,
+        },
         {
           name: 'Fermer le distributeur de papier',
           mac: '0013a20041a72946',
-          task: false,
+          accomplished: false,
         },
-        { name: 'Réparer la machine à café', mac: '0013a20041a713bc', task: false },
+        {
+          name: 'Réparer la machine à café',
+          mac: '0013a20041a713bc',
+          accomplished: false,
+        },
         //puce fonctionne pas
         // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-        { name: 'Ranger les affaires IOT', mac: '0013a20041582fb1', task: false },
+        {
+          name: 'Ranger les affaires IOT',
+          mac: '0013a20041582fb1',
+          accomplished: false,
+        },
         // { name: 'Réparer le ditributeur', mac: '', task: false },
       ],
       start: false,
+      vote: [],
     };
     this.subjectGame.next(this.game);
     return this.game;
@@ -271,6 +353,32 @@ export class GameService {
     ) {
       return true;
     }
-    return this.game.rooms.every((room) => room.task);
+    return this.game.globalTasks.every((room) => room.accomplished);
+  }
+
+  public mostPlayerVote(vote) {
+    console.log('vote =', vote);
+    if (vote.length == 0) return null;
+    const modeMap = {};
+    let maxEl = vote[0],
+      maxCount = 0;
+    for (let i = 0; i < vote.length; i++) {
+      const el = vote[i];
+      if (modeMap[el] == null) modeMap[el] = 1;
+      else modeMap[el]++;
+      console.log(modeMap);
+
+      // const test = Object.values(modeMap);
+      // test.sort(function (a: number, b: number) {
+      //   return b - a;
+      // });
+      // console.log(test);
+
+      if (modeMap[el] > maxCount) {
+        maxEl = el;
+        maxCount = modeMap[el];
+      }
+    }
+    return { mostPlayerVote: maxEl, count: maxCount };
   }
 }

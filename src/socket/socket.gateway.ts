@@ -11,7 +11,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
-import { GameModel, RolePlayer } from './models/game.model';
+import { GameModel, Players, RolePlayer } from './models/game.model';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -91,28 +91,47 @@ export class SocketGateway
     this.server.emit('buzzer', buzzer);
   }
 
-  countDownMeeting(status: boolean): { status: boolean; countDown: number } {
-    let counter = 60;
+  countDownMeeting(status: boolean): {
+    status: boolean;
+    countDown: number;
+    vote: string;
+  } {
+    let counter = 15;
     if (status) {
       const functionCounter = setInterval(() => {
-        this.handleMeeting(counter, status);
+        this.handleMeeting(counter, status, '', 0);
         counter--;
         if (counter === 0) {
-          this.handleMeeting(counter, false);
+          this.handleMeeting(
+            counter,
+            false,
+            this.gameService.mostPlayerVote(this.game.vote).mostPlayerVote,
+            this.gameService.mostPlayerVote(this.game.vote).count,
+          );
           this.gameService.resetBuzzer();
           this.gameService.resetReport();
+          this.gameService.resetVote();
           clearInterval(functionCounter);
         }
       }, 1000);
     } else {
-      return { status: false, countDown: 0 };
+      return {
+        status: false,
+        countDown: 0,
+        vote: '',
+      };
     }
   }
 
   @SubscribeMessage('meeting')
-  handleMeeting(counter: number, status: boolean) {
+  handleMeeting(counter: number, status: boolean, vote: string, count: number) {
     this.logger.log('meeting, { countDown: counter, status }');
-    this.server.emit('meeting', { countDown: counter, status });
+    this.server.emit('meeting', {
+      countDown: counter,
+      status,
+      vote: vote,
+      count: count,
+    });
   }
 
   @SubscribeMessage('report')
@@ -121,6 +140,21 @@ export class SocketGateway
     const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
     this.server.emit('report', report);
+  }
+
+  @SubscribeMessage('sabotage')
+  handleSabotage(@MessageBody() data: { isSabotage: boolean }) {
+    this.logger.log('sabotage');
+    this.server.emit('sabotage', data.isSabotage);
+  }
+
+  @SubscribeMessage('vote')
+  handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
+    console.log(data);
+    const playerFrom: Players = this.gameService.getPlayerByMac(data.macFrom);
+    const playerTo: Players = this.gameService.getPlayerByMac(data.macTo);
+    this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
+    this.game.vote.push(playerTo.name);
   }
 
   @SubscribeMessage('resetGame')

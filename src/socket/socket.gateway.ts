@@ -102,12 +102,13 @@ export class SocketGateway
         this.handleMeeting(counter, status, '', 0);
         counter--;
         if (counter === 0) {
-          this.handleMeeting(
-            counter,
-            false,
-            this.gameService.mostPlayerVote(this.game.vote).mostPlayerVote,
-            this.gameService.mostPlayerVote(this.game.vote).count,
-          );
+          const mostPlayerVote = this.gameService.mostPlayerVote(
+            this.game.vote,
+          ).mostPlayerVote;
+          const count = this.gameService.mostPlayerVote(this.game.vote).count;
+          this.handleMeeting(counter, false, mostPlayerVote, count);
+          const index = this.gameService.getIndexPlayer(mostPlayerVote);
+          this.game.players[index].isAlive = false;
           this.gameService.resetBuzzer();
           this.gameService.resetReport();
           this.gameService.resetVote();
@@ -150,7 +151,6 @@ export class SocketGateway
 
   @SubscribeMessage('vote')
   handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
-    console.log(data);
     const playerFrom: Players = this.gameService.getPlayerByMac(data.macFrom);
     const playerTo: Players = this.gameService.getPlayerByMac(data.macTo);
     this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);

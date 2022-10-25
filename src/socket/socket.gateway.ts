@@ -107,8 +107,10 @@ export class SocketGateway
           ).mostPlayerVote;
           const count = this.gameService.mostPlayerVote(this.game.vote).count;
           this.handleMeeting(counter, false, mostPlayerVote, count);
-          const index = this.gameService.getIndexPlayer(mostPlayerVote);
-          this.game.players[index].isAlive = false;
+          if(mostPlayerVote !== '') {
+            const index = this.gameService.getIndexPlayer(mostPlayerVote);
+            this.game.players[index].isAlive = false;
+          }
           this.gameService.resetBuzzer();
           this.gameService.resetReport();
           this.gameService.resetVote();

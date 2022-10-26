@@ -68,14 +68,6 @@ export class SocketGateway
     this.server.emit('deathPlayer', this.gameService.deathPlayer(data.mac));
   }
 
-  @SubscribeMessage('task')
-  handleTask(@MessageBody() data: { mac: string; status: boolean }) {
-    this.logger.log('task', data);
-    const task = this.gameService.accomplishedTask(data.mac, data.status);
-    this.handleRefresh(this.gameService.getGame());
-    this.server.emit('task', task);
-  }
-
   @SubscribeMessage('refresh')
   handleRefresh(game) {
     this.logger.log('refresh');
@@ -107,7 +99,7 @@ export class SocketGateway
           ).mostPlayerVote;
           const count = this.gameService.mostPlayerVote(this.game.vote).count;
           this.handleMeeting(counter, false, mostPlayerVote, count);
-          if(mostPlayerVote !== '') {
+          if (mostPlayerVote !== '') {
             const index = this.gameService.getIndexPlayer(mostPlayerVote);
             this.game.players[index].isAlive = false;
           }
@@ -124,6 +116,69 @@ export class SocketGateway
         vote: '',
       };
     }
+  }
+
+  countDownTasks(status: boolean) {
+    let counter = 15;
+    if (status) {
+      const functionCounter = setInterval(() => {
+        this.handleCountDownTask(counter, status);
+        counter--;
+        if (counter === 0) {
+          this.handleCountDownTask(counter, status);
+          clearInterval(functionCounter);
+        }
+      }, 1000);
+    } else {
+      return false;
+    }
+  }
+
+  @SubscribeMessage('countDownTask')
+  handleCountDownTask(counter: number, status: boolean) {
+    this.server.emit('countDownTask', {
+      counter,
+      status,
+    });
+  }
+
+  @SubscribeMessage('nearTask')
+  handleNearTask(@MessageBody() data: { status: boolean; mac: string }) {
+    this.countDownTasks(data.status);
+    this.server.emit('nearTask', { status: data.status, mac: data.mac });
+  }
+
+  @SubscribeMessage('accomplishedTask')
+  handleAccomplishedTask(
+    @MessageBody()
+    data: {
+      macTask: string;
+      accomplished: boolean;
+    },
+  ) {
+    this.logger.log('task', data);
+    this.server.emit('task', {
+      mac: data.macTask,
+      accomplished: data.accomplished,
+    });
+  }
+
+  @SubscribeMessage('accomplishedTask')
+  handleDoneTask(
+    @MessageBody()
+    data: {
+      macPlayer: string;
+      macTask: string;
+      accomplished: boolean;
+    },
+  ) {
+    this.logger.log('task', data);
+    const task = this.gameService.doneTask(
+      data.macPlayer,
+      data.macTask,
+      data.accomplished,
+    );
+    this.server.emit('task', task);
   }
 
   @SubscribeMessage('meeting')

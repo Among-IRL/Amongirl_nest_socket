@@ -153,8 +153,13 @@ export class GameService {
     return this.game.players.findIndex((player) => player.name === name);
   }
 
-  private getIndexRoom(mac: string) {
-    return this.game.globalTasks.findIndex((room) => room.mac === mac);
+  private getIndexGlobalTasks(mac: string) {
+    return this.game.globalTasks.findIndex((task) => task.mac === mac);
+  }
+  private getPersonalTasksByPlayer(macTask: string, index: number) {
+    return this.game.players[index].personalTasks.findIndex(
+      (task) => task.mac === macTask,
+    );
   }
 
   private getIndexPlayerByMac(mac: string) {
@@ -162,7 +167,6 @@ export class GameService {
   }
 
   public getPlayerByMac(mac: string) {
-
     return this.game.players.find((player) => {
       console.log(player + '\n');
       return player.mac === mac;
@@ -184,16 +188,23 @@ export class GameService {
     };
   }
 
-  public accomplishedTask(
-    mac: string,
+  public doneTask(
+    macPlayer: string,
+    macTask: string,
     status: boolean,
   ): {
     name: string;
     mac: string;
     accomplished: boolean;
   } {
-    const index = this.getIndexRoom(mac);
-    this.game.globalTasks[index].accomplished = status;
+    const index = this.getIndexGlobalTasks(macPlayer);
+
+    if (this.game.globalTasks[index].mac === macTask) {
+      this.game.globalTasks[index].accomplished = status;
+    } else {
+      this.getPersonalTasksByPlayer(macTask, index);
+    }
+
     this.subjectGame.next(this.game);
     return {
       name: this.game.globalTasks[index].name,

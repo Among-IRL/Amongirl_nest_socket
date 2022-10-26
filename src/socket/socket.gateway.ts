@@ -75,8 +75,8 @@ export class SocketGateway
   }
 
   @SubscribeMessage('buzzer')
-  handleBuzzer(@MessageBody() data: { mac: string; status: boolean }) {
-    const buzzer = this.gameService.buzzer(data.mac);
+  handleBuzzer(@MessageBody() data: { status: boolean }) {
+    const buzzer = this.gameService.buzzer();
     this.handleRefresh(this.gameService.getGame());
     this.logger.log('buzzer');
     this.countDownMeeting(buzzer.status);
@@ -101,7 +101,8 @@ export class SocketGateway
           this.handleMeeting(counter, false, mostPlayerVote, count);
           if (mostPlayerVote !== '') {
             const index = this.gameService.getIndexPlayer(mostPlayerVote);
-            this.game.players[index].isAlive = false;
+            const player = this.game.players[index];
+            this.handleDeathPlayer({ mac: player.mac });
           }
           this.gameService.resetBuzzer();
           this.gameService.resetReport();

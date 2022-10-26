@@ -8,30 +8,30 @@ const initGame: GameModel = {
     isActive: false,
   },
   players: [
-    // {
-    //   name: 'Joueur 1',
-    //   mac: '0013a20041a72956',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 2',
-    //   mac: '0013a20041582fc0',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 3',
-    //   mac: '0013a20041a72913',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
+    {
+      name: 'Joueur 1',
+      mac: '0013a20041a72956',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: [],
+    },
+    {
+      name: 'Joueur 2',
+      mac: '0013a20041582fc0',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: [],
+    },
+    {
+      name: 'Joueur 3',
+      mac: '0013a20041a72913',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: [],
+    },
     // {
     //   name: 'Joueur 4',
     //   mac: '0013a20041e54aeb',
@@ -180,7 +180,10 @@ export class GameService {
   } {
     const index = this.getIndexPlayerByMac(mac);
     this.game.players[index].isAlive = false;
+    console.log('before', this.game.players);
     this.subjectGame.next(this.game);
+    console.log('after', this.game.players);
+
     return {
       name: this.game.players[index].name,
       mac: this.game.players[index].mac,
@@ -217,7 +220,7 @@ export class GameService {
     return this.game;
   }
 
-  public buzzer(mac: string) {
+  public buzzer() {
     this.game.buzzer.isActive = true;
     return { mac: this.game.buzzer.mac, status: this.game.buzzer.isActive };
   }
@@ -250,30 +253,30 @@ export class GameService {
         isActive: false,
       },
       players: [
-        // {
-        //   name: 'Joueur 1',
-        //   mac: '0013a20041a72956',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
-        // {
-        //   name: 'Joueur 2',
-        //   mac: '0013a20041582fc0',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
-        // {
-        //   name: 'Joueur 3',
-        //   mac: '0013a20041a72913',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
+        {
+          name: 'Joueur 1',
+          mac: '0013a20041a72956',
+          role: RolePlayer.PLAYER,
+          hasReport: false,
+          isAlive: true,
+          personalTasks: [],
+        },
+        {
+          name: 'Joueur 2',
+          mac: '0013a20041582fc0',
+          role: RolePlayer.PLAYER,
+          hasReport: false,
+          isAlive: true,
+          personalTasks: [],
+        },
+        {
+          name: 'Joueur 3',
+          mac: '0013a20041a72913',
+          role: RolePlayer.PLAYER,
+          hasReport: false,
+          isAlive: true,
+          personalTasks: [],
+        },
         // {
         //   name: 'Joueur 4',
         //   mac: '0013a20041e54aeb',
@@ -367,7 +370,7 @@ export class GameService {
   }
 
   public mostPlayerVote(vote) {
-    if (vote.length == 0) return null;
+    if (vote.length == 0) return { mostPlayerVote: '', count: 0 };
     const modeMap = {};
     let maxEl = vote[0];
     let maxCount = 0;

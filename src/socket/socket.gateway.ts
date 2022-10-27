@@ -13,6 +13,7 @@ import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
 import { GameModel, Players, RolePlayer } from './models/game.model';
 import { SimonService } from './services/simon.service';
+import { DesabotageService } from './services/desabotage.service';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -20,11 +21,12 @@ export class SocketGateway
 {
   private game: GameModel;
   constructor(
+    private readonly desabotageService: DesabotageService,
     private readonly gameService: GameService,
     private readonly simonService: SimonService,
   ) {
     setTimeout(() => {
-      this.handleTaskSimonEnable();
+      this.handleEnableDesabotage();
     }, 10000);
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
@@ -38,6 +40,21 @@ export class SocketGateway
         }
       },
     );
+    this.desabotageService.observableStatus.subscribe((status: string) => {
+      if (this.server) {
+        switch (status) {
+          case 'red':
+            this.handleEnableDesabotage();
+            break;
+          case 'yellow':
+            this.handleDesabotageEngaged();
+            break;
+          case 'green':
+            this.handleTaskCompletedDesabotage();
+            break;
+        }
+      }
+    });
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
       if (this.gameService.winSaboteur() && game.start) {
@@ -73,6 +90,38 @@ export class SocketGateway
   handleSelectPlayer(@MessageBody() data: { name: string }) {
     this.logger.log('selectPlayer', data.name);
     this.server.emit('selectPlayer', this.gameService.selectPlayer(data.name));
+  }
+
+  handleDisableDesabotage() {
+    this.logger.log('disableDesabotage');
+    this.server.emit('disableDesabotage');
+  }
+
+  handleTaskCompletedDesabotage() {
+    this.logger.log('taskCompletedDesabotage');
+    this.server.emit('taskCompletedDesabotage');
+  }
+
+  handleDesabotageEngaged() {
+    this.logger.log('taskDesabotageEngaged');
+    this.server.emit('taskDesabotageEngaged');
+  }
+
+  handleEnableDesabotage() {
+    this.logger.log('enableDesabotage');
+    this.server.emit('enableDesabotage');
+  }
+
+  @SubscribeMessage('taskDesabotage1')
+  handleDesabotage1(@MessageBody() data: { isPressed: boolean }) {
+    this.logger.log('desabotage1', data);
+    this.desabotageService.onPressedDesabotage1(data.isPressed);
+  }
+
+  @SubscribeMessage('taskDesabotage2')
+  handleDesabotage2(@MessageBody() data: { isPressed: boolean }) {
+    this.logger.log('desabotage2', data);
+    this.desabotageService.onPressedDesabotage2(data.isPressed);
   }
 
   handleTaskSimonEnable() {

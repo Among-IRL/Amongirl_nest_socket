@@ -14,6 +14,7 @@ import { GameService } from './services/game.service';
 import { GameModel, Players, RolePlayer } from './models/game.model';
 import { SimonService } from './services/simon.service';
 import { DesabotageService } from './services/desabotage.service';
+import { QrCodeService } from './services/qr-code.service';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -22,11 +23,15 @@ export class SocketGateway
   private game: GameModel;
   constructor(
     private readonly desabotageService: DesabotageService,
+    private readonly qrCodeService: QrCodeService,
     private readonly gameService: GameService,
     private readonly simonService: SimonService,
   ) {
     setTimeout(() => {
-      this.handleEnableDesabotage();
+      this.handleEnableTaskQrCode();
+      setTimeout(() => {
+        this.qrCodeService.endTask();
+      }, 2000)
     }, 10000);
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
@@ -55,6 +60,13 @@ export class SocketGateway
         }
       }
     });
+    this.qrCodeService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.handleTaskCompletedQrCode();
+        }
+      },
+    );
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
       if (this.gameService.winSaboteur() && game.start) {
@@ -153,6 +165,21 @@ export class SocketGateway
     if (data) {
       this.simonService.choiceHuman(data.led);
     }
+  }
+
+  handleEnableTaskQrCode() {
+    this.logger.log('enableTaskQrCode');
+    this.server.emit('enableTaskQrCode');
+  }
+
+  handleDisableTaskQrCode() {
+    this.logger.log('disableTaskQrCode');
+    this.server.emit('disableTaskQrCode');
+  }
+
+  handleTaskCompletedQrCode() {
+    this.logger.log('taskCompletedQrCode');
+    this.server.emit('taskCompletedQrCode');
   }
 
   @SubscribeMessage('startGame')

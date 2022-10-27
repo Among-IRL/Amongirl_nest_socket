@@ -15,6 +15,7 @@ import { GameModel, Players, RolePlayer } from './models/game.model';
 import { SimonService } from './services/simon.service';
 import { DesabotageService } from './services/desabotage.service';
 import { QrCodeService } from './services/qr-code.service';
+import { CardSwipService } from './services/card-swip.service';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -26,13 +27,18 @@ export class SocketGateway
     private readonly qrCodeService: QrCodeService,
     private readonly gameService: GameService,
     private readonly simonService: SimonService,
+    private readonly cardSwipService: CardSwipService,
   ) {
     setTimeout(() => {
-      this.handleEnableTaskQrCode();
-      setTimeout(() => {
-        this.qrCodeService.endTask();
-      }, 2000)
+      this.handleEnableTaskCardSwip();
     }, 10000);
+    this.cardSwipService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.handleTaskCompletedTaskCardSwip();
+        }
+      },
+    );
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
         this.handleTaskLedSimon(led);
@@ -180,6 +186,27 @@ export class SocketGateway
   handleTaskCompletedQrCode() {
     this.logger.log('taskCompletedQrCode');
     this.server.emit('taskCompletedQrCode');
+  }
+
+  handleEnableTaskCardSwip() {
+    this.logger.log('enableTaskCardSwip');
+    this.server.emit('enableTaskCardSwip');
+  }
+
+  handleDisableTaskCardSwip() {
+    this.logger.log('disableTaskCardSwip');
+    this.server.emit('disableTaskCardSwip');
+  }
+
+  handleTaskCompletedTaskCardSwip() {
+    this.logger.log('taskCompletedTaskCardSwip');
+    this.server.emit('taskCompletedTaskCardSwip');
+  }
+
+  @SubscribeMessage('taskCardSwip')
+  handleTaskCardSwip(@MessageBody() data: { isDetected: boolean }) {
+    this.logger.log('taskCardSwip', data);
+    this.cardSwipService.onDetectedCard(data.isDetected);
   }
 
   @SubscribeMessage('startGame')

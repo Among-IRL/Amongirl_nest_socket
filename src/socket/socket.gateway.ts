@@ -12,13 +12,32 @@ import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
 import { GameModel, Players, RolePlayer } from './models/game.model';
+import { SimonService } from './services/simon.service';
 
 @WebSocketGateway()
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private game: GameModel;
-  constructor(private readonly gameService: GameService) {
+  constructor(
+    private readonly gameService: GameService,
+    private readonly simonService: SimonService,
+  ) {
+    setTimeout(() => {
+      this.handleTaskSimonEnable();
+    }, 10000);
+    this.simonService.observableLed.subscribe((led: string) => {
+      if (led) {
+        this.handleTaskLedSimon(led);
+      }
+    });
+    this.simonService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.handleTaskCompletedSimon();
+        }
+      },
+    );
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
       if (this.gameService.winSaboteur() && game.start) {
@@ -49,10 +68,42 @@ export class SocketGateway
     this.logger.log('win', role);
     this.server.emit('win', role);
   }
+
   @SubscribeMessage('selectPlayer')
   handleSelectPlayer(@MessageBody() data: { name: string }) {
     this.logger.log('selectPlayer', data.name);
     this.server.emit('selectPlayer', this.gameService.selectPlayer(data.name));
+  }
+
+  handleTaskSimonEnable() {
+    this.logger.log('enableTaskSimon');
+    this.server.emit('enableTaskSimon');
+    setTimeout(() => {
+      this.simonService.startSimon();
+    }, 2000);
+  }
+
+  handleDisableTaskSimon() {
+    this.logger.log('disableTaskSimon');
+    this.server.emit('disableTaskSimon');
+  }
+
+  handleTaskCompletedSimon() {
+    this.logger.log('taskCompletedSimon');
+    this.server.emit('taskCompletedSimon');
+  }
+
+  handleTaskLedSimon(led: string) {
+    this.logger.log('taskLedSimon', { led: led });
+    this.server.emit('taskLedSimon', { led: led });
+  }
+
+  @SubscribeMessage('taskSimon')
+  handleChoiceHumanSimon(@MessageBody() data: { led: string }) {
+    this.logger.log('taskSimon', data);
+    if (data) {
+      this.simonService.choiceHuman(data.led);
+    }
   }
 
   @SubscribeMessage('startGame')

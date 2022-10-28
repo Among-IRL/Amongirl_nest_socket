@@ -16,11 +16,11 @@ import { SimonService } from './services/simon.service';
 import { DesabotageService } from './services/desabotage.service';
 import { QrCodeService } from './services/qr-code.service';
 import { CardSwipService } from './services/card-swip.service';
+import { KeyCodeService } from './services/key-code.service';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private game: GameModel;
   constructor(
     private readonly desabotageService: DesabotageService,
@@ -28,10 +28,12 @@ export class SocketGateway
     private readonly gameService: GameService,
     private readonly simonService: SimonService,
     private readonly cardSwipService: CardSwipService,
+    private readonly keycodeService: KeyCodeService,
   ) {
     setTimeout(() => {
-      this.handleEnableTaskCardSwip();
+      this.handleEnableTaskKeyCode();
     }, 10000);
+
     this.cardSwipService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -39,11 +41,13 @@ export class SocketGateway
         }
       },
     );
+
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
         this.handleTaskLedSimon(led);
       }
     });
+
     this.simonService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -51,6 +55,15 @@ export class SocketGateway
         }
       },
     );
+
+    this.keycodeService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.handleTaskCompletedKeyCode();
+        }
+      },
+    );
+
     this.desabotageService.observableStatus.subscribe((status: string) => {
       if (this.server) {
         switch (status) {
@@ -66,6 +79,7 @@ export class SocketGateway
         }
       }
     });
+
     this.qrCodeService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -73,6 +87,7 @@ export class SocketGateway
         }
       },
     );
+
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
       if (this.gameService.winSaboteur() && game.start) {
@@ -207,6 +222,30 @@ export class SocketGateway
   handleTaskCardSwip(@MessageBody() data: { isDetected: boolean }) {
     this.logger.log('taskCardSwip', data);
     this.cardSwipService.onDetectedCard(data.isDetected);
+  }
+
+  handleEnableTaskKeyCode() {
+    this.logger.log('enableTaskKeyCode');
+    this.server.emit('enableTaskKeyCode');
+    setTimeout(() => {
+      this.keycodeService.startKeyCode();
+    }, 2000);
+  }
+
+  handleDisableTaskKeyCode() {
+    this.logger.log('disableTaskKeyCode');
+    this.server.emit('disableTaskKeyCode');
+  }
+
+  handleTaskCompletedKeyCode() {
+    this.logger.log('taskCompletedTaskKeyCode');
+    this.server.emit('taskCompletedTaskKeyCode');
+  }
+
+  @SubscribeMessage('taskKeyCode')
+  handleTaskKeyCode(@MessageBody() data: { keyPressed: string }) {
+    this.logger.log('taskKeyCode', data);
+    this.keycodeService.onKeyPressed(data.keyPressed);
   }
 
   @SubscribeMessage('startGame')

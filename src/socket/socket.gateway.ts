@@ -38,6 +38,12 @@ export class SocketGateway
 
   afterInit(server: Server) {
     this.logger.log('Init');
+    this.keycodeService.observableCodeToFound.subscribe((code: string[]) => {
+      this.handleTaskCodeToFound(code);
+    });
+    this.keycodeService.observableKeyPressed.subscribe((key: string) => {
+      this.handleTaskKeyPressed(key);
+    });
     this.cardSwipService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -435,5 +441,15 @@ export class SocketGateway
 
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${client.id}`);
+  }
+
+  private handleTaskCodeToFound(code: string[]) {
+    this.logger.log('CodeToFound', code);
+    this.server.emit('taskCodeToFound', code);
+  }
+
+  private handleTaskKeyPressed(key: string) {
+    this.logger.log('KeyPressed', key);
+    this.server.emit('taskKeyPressed', key);
   }
 }

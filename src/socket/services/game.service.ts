@@ -210,6 +210,7 @@ export class GameService {
   }
 
   taskCompleted(task: string) {
+    console.log(JSON.stringify(this.game, null, 2));
     const indexPlayer = this.game.players.findIndex(
       (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
     );

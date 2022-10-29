@@ -8,43 +8,34 @@ export class KeyCodeService {
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
 
-  private subjectCodeToFound: BehaviorSubject<boolean> =
-    new BehaviorSubject<boolean>(false);
-  public observableCodeToFound: Observable<boolean> =
-    this.subjectTaskCompleted.asObservable();
+  private subjectCodeToFound: BehaviorSubject<string[]> = new BehaviorSubject<
+    string[]
+  >([]);
+  public observableCodeToFound: Observable<string[]> =
+    this.subjectCodeToFound.asObservable();
 
-  private allowedValues: string[] = [
-    'A',
-    'B',
-    'C',
-    'D',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '0',
-  ];
-  private keysValues: string[] = [
-    '65',
-    '66',
-    '67',
-    '68',
-    '49',
-    '50',
-    '51',
-    '52',
-    '53',
-    '54',
-    '55',
-    '56',
-    '57',
-    '48',
-  ];
+  private subjectKeyPressed: BehaviorSubject<string> =
+    new BehaviorSubject<string>('');
+  public observableKeyPressed: Observable<string> =
+    this.subjectKeyPressed.asObservable();
+
+  private keysValues = {
+    '65': 'A',
+    '66': 'B',
+    '67': 'C',
+    '68': 'D',
+    '49': '1',
+    '50': '2',
+    '51': '3',
+    '52': '4',
+    '53': '5',
+    '54': '6',
+    '55': '7',
+    '56': '8',
+    '57': '9',
+    '48': '0',
+  };
+
   private codeArray: string[];
   private codeEntered: string[];
   private countCheck: number;
@@ -58,32 +49,25 @@ export class KeyCodeService {
   }
 
   private generateRandomCode(): void {
+    const listKeyValues = Object.values(this.keysValues);
     for (this.countCheck = 0; this.countCheck < 4; this.countCheck++) {
       this.codeArray.push(
-        this.keysValues[Math.floor(Math.random() * (12 - 0 + 1))],
+        listKeyValues[Math.floor(Math.random() * (12 - 0 + 1))],
       );
     }
-
-    console.log('KeyCode à rentrer : ', this.codeArray);
+    this.subjectCodeToFound.next(this.codeArray);
   }
 
   onKeyPressed(keyPressed: string) {
-    console.log('Key pressed : ', keyPressed);
-
+    this.subjectKeyPressed.next(this.keysValues[keyPressed]);
     if (keyPressed && this.codeEntered.length < 4) {
-      this.codeEntered.push(keyPressed.toString());
+      this.codeEntered.push(this.keysValues[keyPressed]);
     }
-
-    console.log("Code de l'humain : ", this.codeEntered);
 
     if (this.countCheck === 3 && this.codeEntered.length === 4) {
       this.isValidCode =
-        JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray)
-          ? true
-          : false;
+        JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray);
     }
-
-    console.log('Valide ? ', this.isValidCode);
 
     if (
       !this.isValidCode &&
@@ -96,7 +80,6 @@ export class KeyCodeService {
   }
 
   endGame() {
-    console.log('COMPLETED !');
     this.subjectTaskCompleted.next(true);
   }
 }

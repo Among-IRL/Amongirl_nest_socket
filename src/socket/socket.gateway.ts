@@ -58,6 +58,10 @@ export class SocketGateway
       }
     });
 
+    this.simonService.observableScoreSimon.subscribe((score: string) => {
+      this.handleScoreSimon(score);
+    })
+
     this.simonService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -168,9 +172,7 @@ export class SocketGateway
   handleTaskSimonEnable() {
     this.logger.log('enableTaskSimon');
     this.server.emit('enableTaskSimon');
-    setTimeout(() => {
-      this.simonService.startSimon();
-    }, 2000);
+    this.simonService.startSimon();
   }
 
   handleDisableTaskSimon() {
@@ -246,6 +248,13 @@ export class SocketGateway
         this.handleEnableTaskKeyCode();
       } else {
         this.server.emit('startTask', { KEYCODE: 'KEYCODE is pending' });
+      }
+    }
+    if (data.task.mac === 'SIMON') {
+      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+        this.handleTaskSimonEnable();
+      } else {
+        this.server.emit('startTask', { KEYCODE: 'SIMON is pending' });
       }
     }
     this.logger.log('startTask', data);
@@ -451,5 +460,10 @@ export class SocketGateway
   private handleTaskKeyPressed(key: string) {
     this.logger.log('KeyPressed', key);
     this.server.emit('taskKeyPressed', key);
+  }
+
+  private handleScoreSimon(score: string) {
+    this.logger.log('scoreSimon', score);
+    this.server.emit('scoreSimon', score);
   }
 }

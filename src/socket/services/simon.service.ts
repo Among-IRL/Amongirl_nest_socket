@@ -13,17 +13,19 @@ export class SimonService {
     new BehaviorSubject<boolean>(false);
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
+  private subjectScoreSimon: BehaviorSubject<string> =
+    new BehaviorSubject<string>('0/200');
+  public observableScoreSimon: Observable<string> =
+    this.subjectScoreSimon.asObservable();
 
   private leds: string[] = ['led1', 'led2', 'led3', 'led4'];
-  private level: number;
   private robotChoice: string;
   private humanChoice: string;
   private countCheck: number;
-  private winNumber = 20;
+  private winNumber = 200;
   private isEnable = false;
 
   startSimon(): void {
-    this.level = 1;
     this.robotChoice = '';
     this.humanChoice = '';
     this.countCheck = 0;
@@ -46,6 +48,7 @@ export class SimonService {
         this.scoreIncrement(choice);
         break;
     }
+    this.subjectScoreSimon.next(this.countCheck + '/200');
     if (this.countCheck === this.winNumber) {
       this.endGame();
     }
@@ -59,8 +62,8 @@ export class SimonService {
 
   private intervalRobotChoice() {
     setInterval(() => {
-      const randomNumber = Math.floor(Math.random() * 7);
-      if (randomNumber === 3) {
+      const randomNumber = Math.floor(Math.random() * 4);
+      if (randomNumber === 2) {
         this.choiceRobot();
       }
     }, 500);

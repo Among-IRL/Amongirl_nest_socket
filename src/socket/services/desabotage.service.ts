@@ -30,7 +30,6 @@ export class DesabotageService {
     this.subjectPress2.asObservable();
 
   public onPressedDesabotage1(isPressed: boolean): void {
-    console.log(isPressed);
     this.subjectPress1.next(isPressed);
   }
 

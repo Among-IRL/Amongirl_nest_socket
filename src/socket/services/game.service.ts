@@ -1,100 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { GameModel, Player, RolePlayer, Task } from '../models/game.model';
+import {
+  GameModel,
+  initGame,
+  personalTask,
+  Player,
+  RolePlayer,
+  Task,
+} from '../models/game.model';
 
-const personalTask: Task[] = [
-  {
-    name: 'Swiper la carte',
-    mac: 'CARDSWIPE',
-    accomplished: false,
-  },
-  {
-    name: 'Code à rentrer',
-    mac: 'KEYCODE',
-    accomplished: false,
-  },
-  {
-    name: 'Scanner le QR-CODE',
-    mac: 'QRCODE',
-    accomplished: false,
-  },
-  {
-    name: 'Réussir le Simone',
-    mac: 'SIMON',
-    accomplished: false,
-  },
-  {
-    name: 'Brancher les câbles',
-    mac: 'CABLE',
-    accomplished: false,
-  },
-];
-
-const initGame: GameModel = {
-  buzzer: {
-    mac: '0013a20041582fc1',
-    isActive: false,
-  },
-  players: [
-    {
-      name: 'Joueur 1',
-      mac: 'JOUEUR1',
-      role: RolePlayer.PLAYER,
-      hasReport: false,
-      isAlive: true,
-      personalTasks: personalTask,
-    },
-    {
-      name: 'Joueur 2',
-      mac: 'JOUEUR2',
-      role: RolePlayer.PLAYER,
-      hasReport: false,
-      isAlive: true,
-      personalTasks: personalTask,
-    },
-    {
-      name: 'Joueur 3',
-      mac: 'JOUEUR3',
-      role: RolePlayer.PLAYER,
-      hasReport: false,
-      isAlive: true,
-      personalTasks: personalTask,
-    },
-    // {
-    //   name: 'Joueur 4',
-    //   mac: '0013a20041e54aeb',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 5',
-    //   mac: '0013a20041a72961',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 6',
-    //   mac: '0013a20041c3475c',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-  ],
-  start: false,
-  vote: [],
-  sabotage: false,
-  desabotage: 0,
-};
 @Injectable()
 export class GameService {
-  game: GameModel = { ...initGame };
+  game: GameModel = JSON.parse(JSON.stringify(initGame));
   private subjectGame: BehaviorSubject<GameModel> =
-    new BehaviorSubject<GameModel>({ ...initGame });
+    new BehaviorSubject<GameModel>(JSON.parse(JSON.stringify(initGame)));
   public observableGame: Observable<GameModel> =
     this.subjectGame.asObservable();
 
@@ -221,120 +140,7 @@ export class GameService {
   }
 
   public resetGame(): GameModel {
-    this.game = {
-      buzzer: {
-        mac: '0013a20041582fc1',
-        isActive: false,
-      },
-      players: [
-        {
-          name: 'Joueur 1',
-          mac: 'JOUEUR1',
-          role: RolePlayer.PLAYER,
-          hasReport: false,
-          isAlive: true,
-          personalTasks: [
-            {
-              name: 'Swiper la carte',
-              mac: 'CARDSWIPE',
-              accomplished: false,
-            },
-            {
-              name: 'Code à rentrer',
-              mac: 'KEYCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Scanner le QR-CODE',
-              mac: 'QRCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Réussir le Simone',
-              mac: 'SIMON',
-              accomplished: false,
-            },
-            {
-              name: 'Brancher les câbles',
-              mac: 'CABLE',
-              accomplished: false,
-            },
-          ],
-        },
-        {
-          name: 'Joueur 2',
-          mac: 'JOUEUR2',
-          role: RolePlayer.PLAYER,
-          hasReport: false,
-          isAlive: true,
-          personalTasks: [
-            {
-              name: 'Swiper la carte',
-              mac: 'CARDSWIPE',
-              accomplished: false,
-            },
-            {
-              name: 'Code à rentrer',
-              mac: 'KEYCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Scanner le QR-CODE',
-              mac: 'QRCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Réussir le Simone',
-              mac: 'SIMON',
-              accomplished: false,
-            },
-            {
-              name: 'Brancher les câbles',
-              mac: 'CABLE',
-              accomplished: false,
-            },
-          ],
-        },
-        {
-          name: 'Joueur 3',
-          mac: 'JOUEUR3',
-          role: RolePlayer.PLAYER,
-          hasReport: false,
-          isAlive: true,
-          personalTasks: [
-            {
-              name: 'Swiper la carte',
-              mac: 'CARDSWIPE',
-              accomplished: false,
-            },
-            {
-              name: 'Code à rentrer',
-              mac: 'KEYCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Scanner le QR-CODE',
-              mac: 'QRCODE',
-              accomplished: false,
-            },
-            {
-              name: 'Réussir le Simone',
-              mac: 'SIMON',
-              accomplished: false,
-            },
-            {
-              name: 'Brancher les câbles',
-              mac: 'CABLE',
-              accomplished: false,
-            },
-          ],
-        },
-      ],
-      start: false,
-      vote: [],
-      sabotage: false,
-      desabotage: 0,
-    };
+    this.game = JSON.parse(JSON.stringify(initGame));
     this.subjectGame.next(this.game);
     return this.game;
   }
@@ -392,6 +198,27 @@ export class GameService {
 
   onSabotage(isSabotage: boolean) {
     this.game.sabotage = isSabotage;
+    this.subjectGame.next(this.game);
+  }
+
+  taskActivateByPlayer(task: Task, player: Player): boolean {
+    if (!this.game.tasks[task.mac].isPendingBy) {
+      this.game.tasks[task.mac].isPendingBy = player.mac;
+      this.subjectGame.next(this.game);
+      return true;
+    }
+  }
+
+  taskCompleted(task: string) {
+    const indexPlayer = this.game.players.findIndex(
+      (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
+    );
+    const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
+      (taskPlayer: Task) => taskPlayer.mac === task,
+    );
+    this.game.players[indexPlayer].personalTasks[indexTask].accomplished = true;
+    this.game.tasks[task].isPendingBy = '';
+    this.game.tasks[task].accomplished++;
     this.subjectGame.next(this.game);
   }
 }

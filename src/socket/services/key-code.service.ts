@@ -8,12 +8,47 @@ export class KeyCodeService {
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
 
-  private allowedValues: string[] = ["A", "B", "C", "D", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
-  private keysValues: string[] = ["65", "66", "67", "68", "49", "50", "51", "52", "53", "54", "55", "56", "57", "48"]
+  private subjectCodeToFound: BehaviorSubject<boolean> =
+    new BehaviorSubject<boolean>(false);
+  public observableCodeToFound: Observable<boolean> =
+    this.subjectTaskCompleted.asObservable();
+
+  private allowedValues: string[] = [
+    'A',
+    'B',
+    'C',
+    'D',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '0',
+  ];
+  private keysValues: string[] = [
+    '65',
+    '66',
+    '67',
+    '68',
+    '49',
+    '50',
+    '51',
+    '52',
+    '53',
+    '54',
+    '55',
+    '56',
+    '57',
+    '48',
+  ];
   private codeArray: string[];
   private codeEntered: string[];
   private countCheck: number;
-  private isValidCode: boolean = false;
+  private isValidCode = false;
 
   startKeyCode(): void {
     this.codeArray = [];
@@ -24,7 +59,9 @@ export class KeyCodeService {
 
   private generateRandomCode(): void {
     for (this.countCheck = 0; this.countCheck < 4; this.countCheck++) {
-      this.codeArray.push(this.keysValues[Math.floor(Math.random() * (12 - 0 + 1))]);
+      this.codeArray.push(
+        this.keysValues[Math.floor(Math.random() * (12 - 0 + 1))],
+      );
     }
 
     console.log('KeyCode à rentrer : ', this.codeArray);
@@ -34,18 +71,24 @@ export class KeyCodeService {
     console.log('Key pressed : ', keyPressed);
 
     if (keyPressed && this.codeEntered.length < 4) {
-      this.codeEntered.push(keyPressed.toString())
+      this.codeEntered.push(keyPressed.toString());
     }
 
-    console.log('Code de l\'humain : ', this.codeEntered)
+    console.log("Code de l'humain : ", this.codeEntered);
 
     if (this.countCheck === 3 && this.codeEntered.length === 4) {
-      this.isValidCode = JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray) ? true : false;
+      this.isValidCode =
+        JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray)
+          ? true
+          : false;
     }
 
     console.log('Valide ? ', this.isValidCode);
 
-    if (!this.isValidCode && JSON.stringify(this.codeArray) !== JSON.stringify(this.codeEntered)) {
+    if (
+      !this.isValidCode &&
+      JSON.stringify(this.codeArray) !== JSON.stringify(this.codeEntered)
+    ) {
       this.codeEntered.length === 4 && this.startKeyCode();
     } else {
       this.endGame();

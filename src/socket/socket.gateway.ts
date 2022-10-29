@@ -30,11 +30,14 @@ export class SocketGateway
     private readonly simonService: SimonService,
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
-  ) {
-    setTimeout(() => {
-      // this.handleSabotage({ isSabotage: true });
-    }, 10000);
+  ) {}
 
+  @WebSocketServer()
+  server: Server;
+  private logger: Logger = new Logger('AppGateway');
+
+  afterInit(server: Server) {
+    this.logger.log('Init');
     this.cardSwipService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
@@ -66,18 +69,16 @@ export class SocketGateway
     );
 
     this.desabotageService.observableStatus.subscribe((status: string) => {
-      if (this.server) {
-        switch (status) {
-          case 'red':
-            this.handleEnableDesabotage();
-            break;
-          case 'yellow':
-            this.handleDesabotageEngaged();
-            break;
-          case 'green':
-            this.handleTaskCompletedDesabotage();
-            break;
-        }
+      switch (status) {
+        case 'red':
+          this.handleEnableDesabotage();
+          break;
+        case 'yellow':
+          this.handleDesabotageEngaged();
+          break;
+        case 'green':
+          this.handleTaskCompletedDesabotage();
+          break;
       }
     });
 
@@ -102,14 +103,6 @@ export class SocketGateway
         this.handleVictory(RolePlayer.PLAYER);
       }
     });
-  }
-
-  @WebSocketServer()
-  server: Server;
-  private logger: Logger = new Logger('AppGateway');
-
-  afterInit(server: Server) {
-    this.logger.log('Init');
   }
 
   @SubscribeMessage('getGameData')
@@ -235,15 +228,27 @@ export class SocketGateway
 
   @SubscribeMessage('startTask')
   handleStartTask(@MessageBody() data: { task: Task; player: Player }) {
+    if (data.task.mac === 'CARDSWIPE') {
+      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+        this.handleEnableTaskCardSwip();
+      } else {
+        this.server.emit('startTask', { CARDSWIPE: 'CARDSWIPE is pending' });
+      }
+    }
+    if (data.task.mac === 'KEYCODE') {
+      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+        this.handleEnableTaskKeyCode();
+      } else {
+        this.server.emit('startTask', { KEYCODE: 'KEYCODE is pending' });
+      }
+    }
     this.logger.log('startTask', data);
   }
 
   handleEnableTaskKeyCode() {
     this.logger.log('enableTaskKeyCode');
     this.server.emit('enableTaskKeyCode');
-    setTimeout(() => {
-      this.keycodeService.startKeyCode();
-    }, 2000);
+    this.keycodeService.startKeyCode();
   }
 
   handleDisableTaskKeyCode() {
@@ -356,7 +361,6 @@ export class SocketGateway
     this.server.emit('nearTask', { status: data.status, mac: data.mac });
   }
 
-  //TODO timerTaskDone
   @SubscribeMessage('timerTaskDone')
   handletimerTaskDone(
     @MessageBody()
@@ -365,7 +369,10 @@ export class SocketGateway
       accomplished: boolean;
     },
   ) {
-    this.logger.log('timerTaskDone', data);
+    setTimeout(() => {
+      this.gameService.taskCompleted(data.macTask);
+      this.logger.log('timerTaskDone', data);
+    }, 10000);
   }
 
   @SubscribeMessage('meeting')
@@ -415,6 +422,11 @@ export class SocketGateway
     this.logger.log('resetGame ');
     const resetGame = this.gameService.resetGame();
     this.server.emit('resetGame', resetGame);
+  }
+
+  @SubscribeMessage('connectEsp')
+  handleConnectEsp(@MessageBody() data: { module: string }) {
+    this.logger.log('connectEsp', data.module);
   }
 
   handleDisconnect(client: Socket) {

@@ -60,7 +60,7 @@ export class SocketGateway
 
     this.simonService.observableScoreSimon.subscribe((score: string) => {
       this.handleScoreSimon(score);
-    })
+    });
 
     this.simonService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
@@ -213,6 +213,14 @@ export class SocketGateway
     this.server.emit('taskCompletedQrCode');
   }
 
+  @SubscribeMessage('qrCodeScan')
+  handleQrCodeScan(
+    @MessageBody() data: { player: Player; accomplished: boolean },
+  ) {
+    this.logger.log('qrCodeScan', data);
+    this.qrCodeService.onDetectQrCode(data.accomplished);
+  }
+
   handleEnableTaskCardSwip() {
     this.logger.log('enableTaskCardSwip');
     this.server.emit('enableTaskCardSwip');
@@ -255,6 +263,13 @@ export class SocketGateway
         this.handleTaskSimonEnable();
       } else {
         this.server.emit('startTask', { KEYCODE: 'SIMON is pending' });
+      }
+    }
+    if (data.task.mac === 'QRCODE') {
+      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+        this.handleEnableTaskQrCode();
+      } else {
+        this.server.emit('startTask', { KEYCODE: 'QRCODE is pending' });
       }
     }
     this.logger.log('startTask', data);

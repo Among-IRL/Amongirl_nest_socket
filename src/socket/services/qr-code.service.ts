@@ -8,7 +8,7 @@ export class QrCodeService {
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
 
-  public endTask() {
-    this.subjectTaskCompleted.next(true);
+  public onDetectQrCode(isValid: boolean) {
+    this.subjectTaskCompleted.next(isValid);
   }
 }

@@ -11,7 +11,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
-import { GameModel, Players, RolePlayer } from './models/game.model';
+import { GameModel, Player, RolePlayer, Task } from './models/game.model';
 import { SimonService } from './services/simon.service';
 import { DesabotageService } from './services/desabotage.service';
 import { QrCodeService } from './services/qr-code.service';
@@ -20,7 +20,8 @@ import { KeyCodeService } from './services/key-code.service';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private game: GameModel;
   constructor(
     private readonly desabotageService: DesabotageService,
@@ -31,7 +32,7 @@ export class SocketGateway
     private readonly keycodeService: KeyCodeService,
   ) {
     setTimeout(() => {
-      this.handleEnableTaskKeyCode();
+      // this.handleSabotage({ isSabotage: true });
     }, 10000);
 
     this.cardSwipService.observableTaskCompleted.subscribe(
@@ -90,6 +91,9 @@ export class SocketGateway
 
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
+      if (game.sabotage) {
+        this.handleOnSabotage();
+      }
       if (this.gameService.winSaboteur() && game.start) {
         this.gameService.resetGame();
         this.handleVictory(RolePlayer.SABOTEUR);
@@ -108,10 +112,10 @@ export class SocketGateway
     this.logger.log('Init');
   }
 
-  @SubscribeMessage('initGame')
+  @SubscribeMessage('getGameData')
   handleInitGame(@MessageBody() data: any) {
-    this.logger.log('Init Game');
-    this.server.emit('initGame', this.game);
+    this.logger.log('getGameData');
+    this.server.emit('getGameData', this.game);
   }
 
   handleVictory(role: RolePlayer) {
@@ -155,6 +159,11 @@ export class SocketGateway
   handleDesabotage2(@MessageBody() data: { isPressed: boolean }) {
     this.logger.log('desabotage2', data);
     this.desabotageService.onPressedDesabotage2(data.isPressed);
+  }
+
+  @SubscribeMessage('connectionDesabotage2')
+  handleConnectionDesabotage2(@MessageBody() data: { isConnect: boolean }) {
+    this.logger.log('connectionDesabotage2', data);
   }
 
   handleTaskSimonEnable() {
@@ -222,6 +231,11 @@ export class SocketGateway
   handleTaskCardSwip(@MessageBody() data: { isDetected: boolean }) {
     this.logger.log('taskCardSwip', data);
     this.cardSwipService.onDetectedCard(data.isDetected);
+  }
+
+  @SubscribeMessage('startTask')
+  handleStartTask(@MessageBody() data: { task: Task; player: Player }) {
+    this.logger.log('startTask', data);
   }
 
   handleEnableTaskKeyCode() {
@@ -342,37 +356,16 @@ export class SocketGateway
     this.server.emit('nearTask', { status: data.status, mac: data.mac });
   }
 
-  @SubscribeMessage('accomplishedTask')
-  handleAccomplishedTask(
+  //TODO timerTaskDone
+  @SubscribeMessage('timerTaskDone')
+  handletimerTaskDone(
     @MessageBody()
     data: {
       macTask: string;
       accomplished: boolean;
     },
   ) {
-    this.logger.log('task', data);
-    this.server.emit('task', {
-      mac: data.macTask,
-      accomplished: data.accomplished,
-    });
-  }
-
-  @SubscribeMessage('accomplishedTask')
-  handleDoneTask(
-    @MessageBody()
-    data: {
-      macPlayer: string;
-      macTask: string;
-      accomplished: boolean;
-    },
-  ) {
-    this.logger.log('task', data);
-    const task = this.gameService.doneTask(
-      data.macPlayer,
-      data.macTask,
-      data.accomplished,
-    );
-    this.server.emit('task', task);
+    this.logger.log('timerTaskDone', data);
   }
 
   @SubscribeMessage('meeting')
@@ -396,16 +389,25 @@ export class SocketGateway
 
   @SubscribeMessage('sabotage')
   handleSabotage(@MessageBody() data: { isSabotage: boolean }) {
-    this.logger.log('sabotage');
-    this.server.emit('sabotage', data.isSabotage);
+    this.logger.log('sabotage', data);
+    this.gameService.onSabotage(data.isSabotage);
+  }
+
+  handleOnSabotage() {
+    this.logger.log('onSabotage', this.game.sabotage);
+    this.server.emit('sabotage', this.game.sabotage);
   }
 
   @SubscribeMessage('vote')
   handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
-    const playerFrom: Players = this.gameService.getPlayerByMac(data.macFrom);
-    const playerTo: Players = this.gameService.getPlayerByMac(data.macTo);
-    this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
-    this.game.vote.push(playerTo.name);
+    const playerFrom: Player = this.gameService.getPlayerByMac(data.macFrom);
+    if (data.macTo) {
+      const playerTo: Player = this.gameService.getPlayerByMac(data.macTo);
+      this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
+      this.game.vote.push(playerTo.name);
+    } else {
+      this.logger.log(playerFrom.name + ' vote for nobody');
+    }
   }
 
   @SubscribeMessage('resetGame')

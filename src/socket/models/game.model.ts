@@ -3,19 +3,19 @@ export enum RolePlayer {
   SABOTEUR = 'saboteur',
 }
 
-interface Tasks {
+export interface Task {
   name: string;
   mac: string;
   accomplished: boolean;
 }
 
-export interface Players {
+export interface Player {
   name: string;
   mac: string;
   isAlive: boolean;
   role: RolePlayer;
   hasReport: boolean;
-  personalTasks: Tasks[];
+  personalTasks: Task[];
 }
 
 export interface GameModel {
@@ -23,8 +23,9 @@ export interface GameModel {
     mac: string;
     isActive: boolean;
   };
-  players: Players[];
-  globalTasks: Tasks[];
+  players: Player[];
   start: boolean;
   vote: string[];
+  sabotage: boolean;
+  desabotage: number;
 }

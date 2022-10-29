@@ -1,6 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { GameModel, RolePlayer } from '../models/game.model';
+import { GameModel, Player, RolePlayer, Task } from '../models/game.model';
+
+const personalTask: Task[] = [
+  {
+    name: 'Swiper la carte',
+    mac: 'CARDSWIPE',
+    accomplished: false,
+  },
+  {
+    name: 'Code à rentrer',
+    mac: 'KEYCODE',
+    accomplished: false,
+  },
+  {
+    name: 'Scanner le QR-CODE',
+    mac: 'QRCODE',
+    accomplished: false,
+  },
+  {
+    name: 'Réussir le Simone',
+    mac: 'SIMON',
+    accomplished: false,
+  },
+  {
+    name: 'Brancher les câbles',
+    mac: 'CABLE',
+    accomplished: false,
+  },
+];
 
 const initGame: GameModel = {
   buzzer: {
@@ -10,27 +38,27 @@ const initGame: GameModel = {
   players: [
     {
       name: 'Joueur 1',
-      mac: '0013a20041a72956',
+      mac: 'JOUEUR1',
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: [],
+      personalTasks: personalTask,
     },
     {
       name: 'Joueur 2',
-      mac: '0013a20041582fc0',
+      mac: 'JOUEUR2',
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: [],
+      personalTasks: personalTask,
     },
     {
       name: 'Joueur 3',
-      mac: '0013a20041a72913',
+      mac: 'JOUEUR3',
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: [],
+      personalTasks: personalTask,
     },
     // {
     //   name: 'Joueur 4',
@@ -57,43 +85,10 @@ const initGame: GameModel = {
     //   personalTasks: [],
     // },
   ],
-  globalTasks: [
-    {
-      name: 'Réparer ordinateur de Colombe',
-      mac: '0013a20041582eee',
-      accomplished: false,
-    },
-    {
-      name: 'Supprimer les absences',
-      mac: '0013a20041c34ac1',
-      accomplished: false,
-    },
-    {
-      name: 'Réparer le robinet',
-      mac: '0013a20041c34b12',
-      accomplished: false,
-    },
-    {
-      name: 'Fermer le distributeur de papier',
-      mac: '0013a20041a72946',
-      accomplished: false,
-    },
-    {
-      name: 'Réparer la machine à café',
-      mac: '0013a20041a713bc',
-      accomplished: false,
-    },
-    //puce fonctionne pas
-    // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-    {
-      name: 'Ranger les affaires IOT',
-      mac: '0013a20041582fb1',
-      accomplished: false,
-    },
-    // { name: 'Réparer le ditributeur', mac: '', task: false },
-  ],
   start: false,
   vote: [],
+  sabotage: false,
+  desabotage: 0,
 };
 @Injectable()
 export class GameService {
@@ -117,32 +112,11 @@ export class GameService {
   public selectPlayer(name: string) {
     const player = {
       name,
-      mac: '0013a20041c3475c' + Math.floor(Math.random() * 1000),
+      mac: 'JOUEUR' + (this.game.players.length + 1),
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: [
-        // {
-        //   name: 'Réparer ordinateur de Colombe',
-        //   mac: '0013a20041582eee',
-        //   accomplished: false,
-        // },
-        // {
-        //   name: 'Réparer ordinateur de Colombe',
-        //   mac: '0013a20041582eee',
-        //   accomplished: false,
-        // },
-        // {
-        //   name: 'Réparer ordinateur de Colombe',
-        //   mac: '0013a20041582eee',
-        //   accomplished: false,
-        // },
-        // {
-        //   name: 'Réparer ordinateur de Colombe',
-        //   mac: '0013a20041582eee',
-        //   accomplished: false,
-        // },
-      ],
+      personalTasks: personalTask,
     };
     this.game.players.push(player);
     this.subjectGame.next(this.game);
@@ -153,9 +127,9 @@ export class GameService {
     return this.game.players.findIndex((player) => player.name === name);
   }
 
-  private getIndexGlobalTasks(mac: string) {
-    return this.game.globalTasks.findIndex((task) => task.mac === mac);
-  }
+  // private getIndexGlobalTasks(mac: string) {
+  //   return this.game.globalTasks.findIndex((task) => task.mac === mac);
+  // }
   private getPersonalTasksByPlayer(macTask: string, index: number) {
     return this.game.players[index].personalTasks.findIndex(
       (task) => task.mac === macTask,
@@ -191,30 +165,30 @@ export class GameService {
     };
   }
 
-  public doneTask(
-    macPlayer: string,
-    macTask: string,
-    status: boolean,
-  ): {
-    name: string;
-    mac: string;
-    accomplished: boolean;
-  } {
-    const index = this.getIndexGlobalTasks(macPlayer);
-
-    if (this.game.globalTasks[index].mac === macTask) {
-      this.game.globalTasks[index].accomplished = status;
-    } else {
-      this.getPersonalTasksByPlayer(macTask, index);
-    }
-
-    this.subjectGame.next(this.game);
-    return {
-      name: this.game.globalTasks[index].name,
-      mac: this.game.globalTasks[index].mac,
-      accomplished: this.game.globalTasks[index].accomplished,
-    };
-  }
+  // public doneTask(
+  //   macPlayer: string,
+  //   macTask: string,
+  //   status: boolean,
+  // ): {
+  //   name: string;
+  //   mac: string;
+  //   accomplished: boolean;
+  // } {
+  //   const index = this.getIndexGlobalTasks(macTask);
+  //
+  //   if (this.game.globalTasks[index].mac === macTask) {
+  //     this.game.globalTasks[index].accomplished = status;
+  //   } else {
+  //     this.getPersonalTasksByPlayer(macTask, index);
+  //   }
+  //
+  //   this.subjectGame.next(this.game);
+  //   return {
+  //     name: this.game.globalTasks[index].name,
+  //     mac: this.game.globalTasks[index].mac,
+  //     accomplished: this.game.globalTasks[index].accomplished,
+  //   };
+  // }
 
   public getGame(): GameModel {
     return this.game;
@@ -255,90 +229,111 @@ export class GameService {
       players: [
         {
           name: 'Joueur 1',
-          mac: '0013a20041a72956',
+          mac: 'JOUEUR1',
           role: RolePlayer.PLAYER,
           hasReport: false,
           isAlive: true,
-          personalTasks: [],
+          personalTasks: [
+            {
+              name: 'Swiper la carte',
+              mac: 'CARDSWIPE',
+              accomplished: false,
+            },
+            {
+              name: 'Code à rentrer',
+              mac: 'KEYCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Scanner le QR-CODE',
+              mac: 'QRCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Réussir le Simone',
+              mac: 'SIMON',
+              accomplished: false,
+            },
+            {
+              name: 'Brancher les câbles',
+              mac: 'CABLE',
+              accomplished: false,
+            },
+          ],
         },
         {
           name: 'Joueur 2',
-          mac: '0013a20041582fc0',
+          mac: 'JOUEUR2',
           role: RolePlayer.PLAYER,
           hasReport: false,
           isAlive: true,
-          personalTasks: [],
+          personalTasks: [
+            {
+              name: 'Swiper la carte',
+              mac: 'CARDSWIPE',
+              accomplished: false,
+            },
+            {
+              name: 'Code à rentrer',
+              mac: 'KEYCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Scanner le QR-CODE',
+              mac: 'QRCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Réussir le Simone',
+              mac: 'SIMON',
+              accomplished: false,
+            },
+            {
+              name: 'Brancher les câbles',
+              mac: 'CABLE',
+              accomplished: false,
+            },
+          ],
         },
         {
           name: 'Joueur 3',
-          mac: '0013a20041a72913',
+          mac: 'JOUEUR3',
           role: RolePlayer.PLAYER,
           hasReport: false,
           isAlive: true,
-          personalTasks: [],
+          personalTasks: [
+            {
+              name: 'Swiper la carte',
+              mac: 'CARDSWIPE',
+              accomplished: false,
+            },
+            {
+              name: 'Code à rentrer',
+              mac: 'KEYCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Scanner le QR-CODE',
+              mac: 'QRCODE',
+              accomplished: false,
+            },
+            {
+              name: 'Réussir le Simone',
+              mac: 'SIMON',
+              accomplished: false,
+            },
+            {
+              name: 'Brancher les câbles',
+              mac: 'CABLE',
+              accomplished: false,
+            },
+          ],
         },
-        // {
-        //   name: 'Joueur 4',
-        //   mac: '0013a20041e54aeb',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
-        // {
-        //   name: 'Joueur 5',
-        //   mac: '0013a20041a72961',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
-        // {
-        //   name: 'Joueur 6',
-        //   mac: '0013a20041c3475c',
-        //   role: RolePlayer.PLAYER,
-        //   hasReport: false,
-        //   isAlive: true,
-        //   personalTasks: [],
-        // },
-      ],
-      globalTasks: [
-        {
-          name: 'Réparer ordinateur de Colombe',
-          mac: '0013a20041582eee',
-          accomplished: false,
-        },
-        {
-          name: 'Supprimer les absences',
-          mac: '0013a20041c34ac1',
-          accomplished: false,
-        },
-        {
-          name: 'Réparer le robinet',
-          mac: '0013a20041c34b12',
-          accomplished: false,
-        },
-        {
-          name: 'Fermer le distributeur de papier',
-          mac: '0013a20041a72946',
-          accomplished: false,
-        },
-        {
-          name: 'Réparer la machine à café',
-          mac: '0013a20041a713bc',
-          accomplished: false,
-        },
-        //puce fonctionne pas
-        // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-        {
-          name: 'Ranger les affaires IOT',
-          mac: '0013a20041582fb1',
-          accomplished: false,
-        },
-        // { name: 'Réparer le ditributeur', mac: '', task: false },
       ],
       start: false,
       vote: [],
+      sabotage: false,
+      desabotage: 0,
     };
     this.subjectGame.next(this.game);
     return this.game;
@@ -366,7 +361,9 @@ export class GameService {
     ) {
       return true;
     }
-    return this.game.globalTasks.every((room) => room.accomplished);
+    return this.game.players.every((player: Player) =>
+      player.personalTasks.every((task: Task) => task.accomplished),
+    );
   }
 
   public mostPlayerVote(vote) {
@@ -391,5 +388,10 @@ export class GameService {
       }
     }
     return { mostPlayerVote: maxEl, count: maxCount };
+  }
+
+  onSabotage(isSabotage: boolean) {
+    this.game.sabotage = isSabotage;
+    this.subjectGame.next(this.game);
   }
 }

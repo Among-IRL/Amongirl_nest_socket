@@ -8,14 +8,30 @@ import {
   RolePlayer,
   Task,
 } from '../models/game.model';
+import { QrCodeService } from './qr-code.service';
 
 @Injectable()
 export class GameService {
+  constructor(private readonly qrCodeService: QrCodeService) {
+    this.qrCodeService.observableTaskCompleted.subscribe(
+      (isComplete: boolean) => {
+        if (isComplete) {
+          this.taskCompleted('QRCODE');
+          this.subjectTaskComplete.next('QRCODE');
+        }
+      },
+    );
+  }
+
   game: GameModel = JSON.parse(JSON.stringify(initGame));
   private subjectGame: BehaviorSubject<GameModel> =
     new BehaviorSubject<GameModel>(JSON.parse(JSON.stringify(initGame)));
   public observableGame: Observable<GameModel> =
     this.subjectGame.asObservable();
+  private subjectTaskComplete: BehaviorSubject<string> =
+    new BehaviorSubject<string>('');
+  public observableTaskComplete: Observable<string> =
+    this.subjectTaskComplete.asObservable();
 
   public startGame() {
     this.game.players[this.random(this.game.players.length)].role =
@@ -35,7 +51,7 @@ export class GameService {
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: personalTask,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
     };
     this.game.players.push(player);
     this.subjectGame.next(this.game);
@@ -210,16 +226,23 @@ export class GameService {
   }
 
   taskCompleted(task: string) {
-    console.log(JSON.stringify(this.game, null, 2));
     const indexPlayer = this.game.players.findIndex(
       (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
     );
-    const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
-      (taskPlayer: Task) => taskPlayer.mac === task,
-    );
-    this.game.players[indexPlayer].personalTasks[indexTask].accomplished = true;
+    if (indexPlayer > 0) {
+      const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
+        (taskPlayer: Task) => taskPlayer.mac === task,
+      );
+      this.game.players[indexPlayer].personalTasks[indexTask].accomplished =
+        true;
+      this.game.tasks[task].isPendingBy = '';
+      this.game.tasks[task].accomplished++;
+      this.subjectGame.next(this.game);
+    }
+  }
+
+  timeDownTask(task: string) {
     this.game.tasks[task].isPendingBy = '';
-    this.game.tasks[task].accomplished++;
     this.subjectGame.next(this.game);
   }
 }

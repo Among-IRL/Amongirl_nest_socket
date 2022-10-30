@@ -92,13 +92,13 @@ export class SocketGateway
       }
     });
 
-    this.qrCodeService.observableTaskCompleted.subscribe(
-      (isCompleted: boolean) => {
-        if (isCompleted) {
+    this.gameService.observableTaskComplete.subscribe((task: string) => {
+      switch (task) {
+        case 'QRCODE':
           this.handleTaskCompletedQrCode();
-        }
-      },
-    );
+          break;
+      }
+    });
 
     this.gameService.observableGame.subscribe((game) => {
       this.game = game;
@@ -198,7 +198,7 @@ export class SocketGateway
     }
   }
 
-  handleEnableTaskQrCode() {
+  handleEnableTaskQrCode(player: Player) {
     this.logger.log('enableTaskQrCode');
     this.server.emit('enableTaskQrCode');
   }
@@ -210,7 +210,7 @@ export class SocketGateway
 
   handleTaskCompletedQrCode() {
     this.logger.log('taskCompletedQrCode');
-    this.server.emit('taskCompletedQrCode');
+    this.server.emit('taskCompletedQrCode', this.game);
   }
 
   @SubscribeMessage('qrCodeScan')
@@ -267,7 +267,7 @@ export class SocketGateway
     }
     if (data.task.mac === 'QRCODE') {
       if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
-        this.handleEnableTaskQrCode();
+        this.handleEnableTaskQrCode(data.player);
       } else {
         this.server.emit('startTask', { KEYCODE: 'QRCODE is pending' });
       }
@@ -399,10 +399,8 @@ export class SocketGateway
       accomplished: boolean;
     },
   ) {
-    setTimeout(() => {
-      this.gameService.taskCompleted(data.macTask);
-      this.logger.log('timerTaskDone', data);
-    }, 10000);
+    this.gameService.timeDownTask(data.macTask);
+    this.logger.log('timerTaskDone', data);
   }
 
   @SubscribeMessage('meeting')

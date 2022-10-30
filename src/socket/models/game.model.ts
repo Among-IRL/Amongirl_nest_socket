@@ -97,7 +97,7 @@ export const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: personalTask,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
     },
     {
       name: 'Joueur 2',
@@ -105,7 +105,7 @@ export const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: personalTask,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
     },
     {
       name: 'Joueur 3',
@@ -113,7 +113,7 @@ export const initGame: GameModel = {
       role: RolePlayer.PLAYER,
       hasReport: false,
       isAlive: true,
-      personalTasks: personalTask,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
     },
     // {
     //   name: 'Joueur 4',

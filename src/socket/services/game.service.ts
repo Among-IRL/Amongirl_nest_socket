@@ -77,7 +77,6 @@ export class GameService {
 
   public getPlayerByMac(mac: string) {
     return this.game.players.find((player) => {
-      console.log(player + '\n');
       return player.mac === mac;
     });
   }
@@ -100,30 +99,6 @@ export class GameService {
     };
   }
 
-  // public doneTask(
-  //   macPlayer: string,
-  //   macTask: string,
-  //   status: boolean,
-  // ): {
-  //   name: string;
-  //   mac: string;
-  //   accomplished: boolean;
-  // } {
-  //   const index = this.getIndexGlobalTasks(macTask);
-  //
-  //   if (this.game.globalTasks[index].mac === macTask) {
-  //     this.game.globalTasks[index].accomplished = status;
-  //   } else {
-  //     this.getPersonalTasksByPlayer(macTask, index);
-  //   }
-  //
-  //   this.subjectGame.next(this.game);
-  //   return {
-  //     name: this.game.globalTasks[index].name,
-  //     mac: this.game.globalTasks[index].mac,
-  //     accomplished: this.game.globalTasks[index].accomplished,
-  //   };
-  // }
 
   public getGame(): GameModel {
     return this.game;
@@ -141,17 +116,9 @@ export class GameService {
     return this.game;
   }
 
-  public resetReport() {
-    this.game.players.forEach((player) => (player.hasReport = false));
-    this.subjectGame.next(this.game);
-  }
-
-  public resetBuzzer() {
-    this.game.buzzer.isActive = false;
-    this.subjectGame.next(this.game);
-  }
-
   public resetVote() {
+    this.game.players.forEach((player) => (player.hasReport = false));
+    this.game.buzzer.isActive = false;
     this.game.vote = [];
   }
 
@@ -214,6 +181,7 @@ export class GameService {
 
   onSabotage(isSabotage: boolean) {
     this.game.sabotage = isSabotage;
+    this.game.desabotage = 2;
     this.subjectGame.next(this.game);
   }
 
@@ -243,6 +211,12 @@ export class GameService {
 
   timeDownTask(task: string) {
     this.game.tasks[task].isPendingBy = '';
+    this.subjectGame.next(this.game);
+  }
+
+  onDesabotage() {
+    this.game.desabotage = 0;
+    this.game.sabotage = false;
     this.subjectGame.next(this.game);
   }
 }

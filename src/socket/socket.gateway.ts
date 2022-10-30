@@ -106,10 +106,8 @@ export class SocketGateway
         this.handleOnSabotage();
       }
       if (this.gameService.winSaboteur() && game.start) {
-        this.gameService.resetGame();
         this.handleVictory(RolePlayer.SABOTEUR);
       } else if (this.gameService.winPlayers() && game.start) {
-        this.gameService.resetGame();
         this.handleVictory(RolePlayer.PLAYER);
       }
     });
@@ -140,6 +138,10 @@ export class SocketGateway
   handleTaskCompletedDesabotage() {
     this.logger.log('taskCompletedDesabotage');
     this.server.emit('taskCompletedDesabotage');
+    this.gameService.onDesabotage();
+    setTimeout(() => {
+      this.handleDisableDesabotage();
+    }, 3000);
   }
 
   handleDesabotageEngaged() {
@@ -301,6 +303,7 @@ export class SocketGateway
   handleStartGame(@MessageBody() data: any) {
     this.logger.log('startGame');
     this.gameService.startGame();
+    console.log(JSON.stringify(this.game, null, 2));
     this.server.emit('startGame', this.game);
   }
 
@@ -336,18 +339,13 @@ export class SocketGateway
         this.handleMeeting(counter, status, '', 0);
         counter--;
         if (counter === 0) {
-          const mostPlayerVote = this.gameService.mostPlayerVote(
-            this.game.vote,
-          ).mostPlayerVote;
-          const count = this.gameService.mostPlayerVote(this.game.vote).count;
-          this.handleMeeting(counter, false, mostPlayerVote, count);
-          if (mostPlayerVote !== '') {
-            const index = this.gameService.getIndexPlayer(mostPlayerVote);
+          const vote = this.gameService.mostPlayerVote(this.game.vote);
+          this.handleMeeting(counter, false, vote.mostPlayerVote, vote.count);
+          if (vote.mostPlayerVote !== '') {
+            const index = this.gameService.getIndexPlayer(vote.mostPlayerVote);
             const player = this.game.players[index];
             this.handleDeathPlayer({ mac: player.mac });
           }
-          this.gameService.resetBuzzer();
-          this.gameService.resetReport();
           this.gameService.resetVote();
           clearInterval(functionCounter);
         }
@@ -430,6 +428,7 @@ export class SocketGateway
 
   handleOnSabotage() {
     this.logger.log('onSabotage', this.game.sabotage);
+    this.handleEnableDesabotage();
     this.server.emit('sabotage', this.game.sabotage);
   }
 

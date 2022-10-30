@@ -467,6 +467,28 @@ export class SocketGateway
   private handleTaskCodeToFound(code: string[]) {
     this.logger.log('CodeToFound', code);
     this.server.emit('taskCodeToFound', code);
+    // FOR DEBUG MASTERMIND
+    // const keysValues = {
+    //   '65': 'A',
+    //   '66': 'B',
+    //   '67': 'C',
+    //   '68': 'D',
+    //   '49': '1',
+    //   '50': '2',
+    //   '51': '3',
+    //   '52': '4',
+    //   '53': '5',
+    //   '54': '6',
+    //   '55': '7',
+    //   '56': '8',
+    //   '57': '9',
+    //   '48': '0',
+    // };
+    // setInterval(() => {
+    //   const randomNumber =
+    //     Object.values(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
+    //   this.handleTaskKeyPressed(randomNumber);
+    // }, 1000);
   }
 
   private handleTaskKeyPressed(key: string) {

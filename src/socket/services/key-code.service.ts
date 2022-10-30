@@ -56,7 +56,8 @@ export class KeyCodeService {
         listKeyValues[Math.floor(Math.random() * (12 - 0 + 1))],
       );
     }
-    this.subjectCodeToFound.next(this.codeToSend);
+    console.log('CODE TO FOUND = ', this.codeArray);
+    this.subjectCodeToFound.next(this.codeArray);
   }
 
   onKeyPressed(keyPressed: string) {

@@ -39,12 +39,13 @@ export class KeyCodeService {
   private codeArray: string[];
   private codeEntered: string[];
   private countCheck: number;
-  private isValidCode = false;
+  private codeToSend: string[];
 
   startKeyCode(): void {
     this.codeArray = [];
     this.codeEntered = [];
     this.countCheck = 0;
+    this.codeToSend = ['*', '*', '*', '*'];
     this.generateRandomCode();
   }
 
@@ -55,7 +56,7 @@ export class KeyCodeService {
         listKeyValues[Math.floor(Math.random() * (12 - 0 + 1))],
       );
     }
-    this.subjectCodeToFound.next(this.codeArray);
+    this.subjectCodeToFound.next(this.codeToSend);
   }
 
   onKeyPressed(keyPressed: string) {
@@ -64,18 +65,17 @@ export class KeyCodeService {
       this.codeEntered.push(this.keysValues[keyPressed]);
     }
 
-    if (this.countCheck === 3 && this.codeEntered.length === 4) {
-      this.isValidCode =
-        JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray);
-    }
-
-    if (
-      !this.isValidCode &&
-      JSON.stringify(this.codeArray) !== JSON.stringify(this.codeEntered)
-    ) {
-      this.codeEntered.length === 4 && this.startKeyCode();
-    } else {
-      this.endGame();
+    if (this.codeEntered.length >= 4) {
+      this.codeArray.forEach((value: string, index: number) => {
+        if (value === this.codeEntered[index]) {
+          this.codeToSend[index] = value;
+        }
+      });
+      this.subjectCodeToFound.next(this.codeToSend);
+      if (JSON.stringify(this.codeEntered) === JSON.stringify(this.codeArray)) {
+        this.endGame();
+      }
+      this.codeEntered = [];
     }
   }
 

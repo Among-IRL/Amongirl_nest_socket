@@ -23,6 +23,7 @@ export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private game: GameModel;
+
   constructor(
     private readonly desabotageService: DesabotageService,
     private readonly qrCodeService: QrCodeService,
@@ -295,7 +296,7 @@ export class SocketGateway
 
   @SubscribeMessage('taskKeyCode')
   handleTaskKeyCode(@MessageBody() data: { keyPressed: string }) {
-    this.logger.log('taskKeyCode', data);
+    // this.logger.log('taskKeyCode', data);
     this.keycodeService.onKeyPressed(data.keyPressed);
   }
 
@@ -468,31 +469,34 @@ export class SocketGateway
     this.logger.log('CodeToFound', code);
     this.server.emit('taskCodeToFound', code);
     // FOR DEBUG MASTERMIND
-    // const keysValues = {
-    //   '65': 'A',
-    //   '66': 'B',
-    //   '67': 'C',
-    //   '68': 'D',
-    //   '49': '1',
-    //   '50': '2',
-    //   '51': '3',
-    //   '52': '4',
-    //   '53': '5',
-    //   '54': '6',
-    //   '55': '7',
-    //   '56': '8',
-    //   '57': '9',
-    //   '48': '0',
-    // };
-    // setInterval(() => {
-    //   const randomNumber =
-    //     Object.values(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
-    //   this.handleTaskKeyPressed(randomNumber);
-    // }, 1000);
+    if (code.length > 0) {
+      const keysValues = {
+        '65': 'A',
+        '66': 'B',
+        '67': 'C',
+        '68': 'D',
+        '49': '1',
+        '50': '2',
+        '51': '3',
+        '52': '4',
+        '53': '5',
+        '54': '6',
+        '55': '7',
+        '56': '8',
+        '57': '9',
+        '48': '0',
+      };
+      setInterval(() => {
+        const randomNumber =
+          Object.keys(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
+        // this.handleTaskKeyPressed(randomNumber);
+        this.handleTaskKeyCode({ keyPressed: randomNumber });
+      }, 2000);
+    }
   }
 
   private handleTaskKeyPressed(key: string) {
-    this.logger.log('KeyPressed', key);
+    // this.logger.log('KeyPressed', key);
     this.server.emit('taskKeyPressed', key);
   }
 

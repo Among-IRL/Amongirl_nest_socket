@@ -57,7 +57,7 @@ export class KeyCodeService {
       );
     }
     console.log('CODE TO FOUND = ', this.codeArray);
-    this.subjectCodeToFound.next(this.codeArray);
+    this.subjectCodeToFound.next(this.codeToSend);
   }
 
   onKeyPressed(keyPressed: string) {

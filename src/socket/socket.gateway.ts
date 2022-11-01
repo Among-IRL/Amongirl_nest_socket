@@ -46,7 +46,6 @@ export class SocketGateway
       this.handleTaskKeyPressed(key);
     });
 
-
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
         this.handleTaskLedSimon(led);
@@ -61,14 +60,6 @@ export class SocketGateway
       (isCompleted: boolean) => {
         if (isCompleted) {
           this.handleTaskCompletedSimon();
-        }
-      },
-    );
-
-    this.keycodeService.observableTaskCompleted.subscribe(
-      (isCompleted: boolean) => {
-        if (isCompleted) {
-          this.handleTaskCompletedKeyCode();
         }
       },
     );
@@ -95,6 +86,10 @@ export class SocketGateway
 
         case 'CARDSWIPE':
           this.handleTaskCompletedTaskCardSwip();
+          break;
+
+        case 'KEYCODE':
+          this.handleTaskCompletedKeyCode();
           break;
       }
     });
@@ -289,7 +284,7 @@ export class SocketGateway
 
   handleTaskCompletedKeyCode() {
     this.logger.log('taskCompletedTaskKeyCode');
-    this.server.emit('taskCompletedTaskKeyCode');
+    this.server.emit('taskCompletedTaskKeyCode', this.game);
   }
 
   @SubscribeMessage('taskKeyCode')

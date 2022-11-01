@@ -14,7 +14,7 @@ export class SimonService {
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
   private subjectScoreSimon: BehaviorSubject<string> =
-    new BehaviorSubject<string>('0/200');
+    new BehaviorSubject<string>('0/50');
   public observableScoreSimon: Observable<string> =
     this.subjectScoreSimon.asObservable();
 
@@ -22,7 +22,7 @@ export class SimonService {
   private robotChoice: string;
   private humanChoice: string;
   private countCheck: number;
-  private winNumber = 200;
+  private winNumber = 50;
   private isEnable = false;
 
   startSimon(): void {
@@ -48,7 +48,7 @@ export class SimonService {
         this.scoreIncrement(choice);
         break;
     }
-    this.subjectScoreSimon.next(this.countCheck + '/200');
+    this.subjectScoreSimon.next(this.countCheck + '/50');
     if (this.countCheck === this.winNumber) {
       this.endGame();
     }

@@ -11,6 +11,7 @@ import {
 import { QrCodeService } from './qr-code.service';
 import { CardSwipService } from './card-swip.service';
 import { KeyCodeService } from './key-code.service';
+import { SimonService } from './simon.service';
 
 @Injectable()
 export class GameService {
@@ -18,6 +19,7 @@ export class GameService {
     private readonly qrCodeService: QrCodeService,
     private readonly cardSwipeService: CardSwipService,
     private readonly keyCodeService: KeyCodeService,
+    private readonly simonService: SimonService,
   ) {
     this.qrCodeService.observableTaskCompleted.subscribe(
       (isComplete: boolean) => {
@@ -42,6 +44,15 @@ export class GameService {
         if (isCompleted) {
           this.taskCompleted('KEYCODE');
           this.subjectTaskComplete.next('KEYCODE');
+        }
+      },
+    );
+
+    this.simonService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted('SIMON');
+          this.subjectTaskComplete.next('SIMON');
         }
       },
     );

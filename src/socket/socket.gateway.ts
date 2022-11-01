@@ -56,14 +56,6 @@ export class SocketGateway
       this.handleScoreSimon(score);
     });
 
-    this.simonService.observableTaskCompleted.subscribe(
-      (isCompleted: boolean) => {
-        if (isCompleted) {
-          this.handleTaskCompletedSimon();
-        }
-      },
-    );
-
     this.desabotageService.observableStatus.subscribe((status: string) => {
       switch (status) {
         case 'red':
@@ -90,6 +82,10 @@ export class SocketGateway
 
         case 'KEYCODE':
           this.handleTaskCompletedKeyCode();
+          break;
+
+        case 'SIMON':
+          this.handleTaskCompletedSimon();
           break;
       }
     });
@@ -178,7 +174,7 @@ export class SocketGateway
 
   handleTaskCompletedSimon() {
     this.logger.log('taskCompletedSimon');
-    this.server.emit('taskCompletedSimon');
+    this.server.emit('taskCompletedSimon', this.game);
   }
 
   handleTaskLedSimon(led: string) {

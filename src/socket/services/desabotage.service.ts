@@ -1,18 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { BehaviorSubject, combineLatestWith, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable()
 export class DesabotageService {
-  constructor() {
-    this.observablePress1
-      .pipe(
-        combineLatestWith(this.observablePress2),
-        tap(([isPress1, isPress2]) => {
-          this.getStatusDesabotage(isPress1, isPress2);
-        }),
-      )
-      .subscribe();
-  }
+  private isPress1 = false;
+  private isPress2 = false;
 
   private subjectStatus: BehaviorSubject<string> = new BehaviorSubject<string>(
     '',
@@ -20,27 +12,25 @@ export class DesabotageService {
   public observableStatus: Observable<string> =
     this.subjectStatus.asObservable();
 
-  private subjectPress1: BehaviorSubject<boolean> =
-    new BehaviorSubject<boolean>(false);
-  private subjectPress2: BehaviorSubject<boolean> =
-    new BehaviorSubject<boolean>(false);
-  private observablePress1: Observable<boolean> =
-    this.subjectPress1.asObservable();
-  private observablePress2: Observable<boolean> =
-    this.subjectPress2.asObservable();
-
   public onPressedDesabotage1(isPressed: boolean): void {
-    this.subjectPress1.next(isPressed);
+    this.isPress1 = isPressed;
+    this.getStatusDesabotage();
   }
 
   public onPressedDesabotage2(isPressed: boolean): void {
-    this.subjectPress2.next(isPressed);
+    this.isPress2 = isPressed;
+    this.getStatusDesabotage();
   }
 
-  private getStatusDesabotage(isPress1, isPress2) {
-    if (isPress1 && isPress2) {
+  private getStatusDesabotage() {
+    if (this.isPress1 && this.isPress2) {
       this.subjectStatus.next('green');
-    } else if ((isPress1 && !isPress2) || (isPress2 && !isPress1)) {
+      this.isPress1 = false;
+      this.isPress2 = false;
+    } else if (
+      (this.isPress1 && !this.isPress2) ||
+      (this.isPress2 && !this.isPress1)
+    ) {
       this.subjectStatus.next('yellow');
     } else {
       this.subjectStatus.next('red');

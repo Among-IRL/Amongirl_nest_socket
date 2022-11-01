@@ -45,13 +45,7 @@ export class SocketGateway
     this.keycodeService.observableKeyPressed.subscribe((key: string) => {
       this.handleTaskKeyPressed(key);
     });
-    this.cardSwipService.observableTaskCompleted.subscribe(
-      (isCompleted: boolean) => {
-        if (isCompleted) {
-          this.handleTaskCompletedTaskCardSwip();
-        }
-      },
-    );
+
 
     this.simonService.observableLed.subscribe((led: string) => {
       if (led) {
@@ -97,6 +91,10 @@ export class SocketGateway
       switch (task) {
         case 'QRCODE':
           this.handleTaskCompletedQrCode();
+          break;
+
+        case 'CARDSWIPE':
+          this.handleTaskCompletedTaskCardSwip();
           break;
       }
     });
@@ -236,7 +234,7 @@ export class SocketGateway
 
   handleTaskCompletedTaskCardSwip() {
     this.logger.log('taskCompletedTaskCardSwip');
-    this.server.emit('taskCompletedTaskCardSwip');
+    this.server.emit('taskCompletedTaskCardSwip', this.game);
   }
 
   @SubscribeMessage('taskCardSwip')
@@ -469,30 +467,30 @@ export class SocketGateway
     this.logger.log('CodeToFound', code);
     this.server.emit('taskCodeToFound', code);
     // FOR DEBUG MASTERMIND
-    if (code.length > 0) {
-      const keysValues = {
-        '65': 'A',
-        '66': 'B',
-        '67': 'C',
-        '68': 'D',
-        '49': '1',
-        '50': '2',
-        '51': '3',
-        '52': '4',
-        '53': '5',
-        '54': '6',
-        '55': '7',
-        '56': '8',
-        '57': '9',
-        '48': '0',
-      };
-      setInterval(() => {
-        const randomNumber =
-          Object.keys(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
-        // this.handleTaskKeyPressed(randomNumber);
-        this.handleTaskKeyCode({ keyPressed: randomNumber });
-      }, 2000);
-    }
+    // if (code.length > 0) {
+    //   const keysValues = {
+    //     '65': 'A',
+    //     '66': 'B',
+    //     '67': 'C',
+    //     '68': 'D',
+    //     '49': '1',
+    //     '50': '2',
+    //     '51': '3',
+    //     '52': '4',
+    //     '53': '5',
+    //     '54': '6',
+    //     '55': '7',
+    //     '56': '8',
+    //     '57': '9',
+    //     '48': '0',
+    //   };
+    //   setInterval(() => {
+    //     const randomNumber =
+    //       Object.keys(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
+    //     // this.handleTaskKeyPressed(randomNumber);
+    //     this.handleTaskKeyCode({ keyPressed: randomNumber });
+    //   }, 2000);
+    // }
   }
 
   private handleTaskKeyPressed(key: string) {

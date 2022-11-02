@@ -95,7 +95,7 @@ export class GameService {
     const player = {
       name,
       mac: 'PLAYER' + (this.game.players.length + 1),
-      role: RolePlayer.PLAYER,
+      role: RolePlayer.SABOTEUR,
       hasReport: false,
       isDeadReport: false,
       isAlive: true,
@@ -159,6 +159,8 @@ export class GameService {
   public report(name: string, mac: string): GameModel {
     const indexPlayerReport = this.getIndexPlayer(name);
     const indexDeadPlayerReported = this.getIndexPlayerByMac(mac);
+    console.log('Players Report : ', this.game.players[indexDeadPlayerReported]);
+    console.log('MAC : ', mac);
     this.game.players[indexPlayerReport].hasReport = true;
     this.game.players[indexDeadPlayerReported].isDeadReport = true;
     this.subjectGame.next(this.game);

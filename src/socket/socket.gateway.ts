@@ -31,7 +31,7 @@ export class SocketGateway
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
     private readonly socleService: SocleService,
-  ) {}
+  ) { }
 
   @WebSocketServer()
   server: Server;
@@ -126,6 +126,16 @@ export class SocketGateway
   handleSelectPlayer(@MessageBody() data: { name: string }) {
     this.logger.log('selectPlayer', data.name);
     this.server.emit('selectPlayer', this.gameService.selectPlayer(data.name));
+  }
+
+  handleEnablePlayers() {
+    this.logger.log('enablePlayer', true);
+    this.server.emit('enablePlayer', true);
+  }
+
+  handleDisablePlayers() {
+    this.logger.log('disablePlayer', true);
+    this.server.emit('disablePlayer', true);
   }
 
   handleDisableDesabotage() {
@@ -314,6 +324,7 @@ export class SocketGateway
     this.logger.log('startGame');
     this.gameService.startGame();
     this.server.emit('startGame', this.game);
+    this.handleEnablePlayers();
   }
 
   @SubscribeMessage('deathPlayer')
@@ -342,6 +353,7 @@ export class SocketGateway
     countDown: number;
     vote: string;
   } {
+    
     let counter = 15;
     if (status) {
       const functionCounter = setInterval(() => {
@@ -354,6 +366,11 @@ export class SocketGateway
             const index = this.gameService.getIndexPlayer(vote.mostPlayerVote);
             const player = this.game.players[index];
             this.handleDeathPlayer({ mac: player.mac });
+            this.game.players.forEach((player) => {
+              if (!player.isAlive) {
+                this.server.emit('deadReport', { macDeadPlayer: player.mac });
+              }
+            })
           }
           this.gameService.resetVote();
           clearInterval(functionCounter);
@@ -427,7 +444,6 @@ export class SocketGateway
     const report = this.gameService.report(data.name, data.macDeadPlayer);
     this.countDownMeeting(true);
     this.server.emit('report', report);
-    this.server.emit('deadReport', { macDeadPlayer: data.macDeadPlayer });
   }
 
   @SubscribeMessage('sabotage')

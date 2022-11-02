@@ -16,7 +16,6 @@ export interface Player {
   role: RolePlayer;
   hasReport: boolean;
   isDeadReport: boolean;
-
   personalTasks: Task[];
 }
 
@@ -92,7 +91,35 @@ export const initGame: GameModel = {
     mac: '0013a20041582fc1',
     isActive: false,
   },
-  players: [],
+  players: [
+    {
+      name: 'Joueur 1',
+      mac: 'PLAYER1',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isDeadReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+    {
+      name: 'Joueur 2',
+      mac: 'PLAYER2',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isDeadReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+    {
+      name: 'Joueur 3',
+      mac: 'PLAYER3',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isDeadReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+  ],
   start: false,
   vote: [],
   sabotage: false,

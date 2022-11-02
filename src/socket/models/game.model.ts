@@ -23,7 +23,7 @@ export interface Tasks {
   KEYCODE: TasksGame;
   QRCODE: TasksGame;
   SIMON: TasksGame;
-  CABLE: TasksGame;
+  SOCLE: TasksGame;
 }
 
 export interface TasksGame {
@@ -61,13 +61,13 @@ export const personalTask: Task[] = [
     accomplished: false,
   },
   {
-    name: 'Réussir le Simone',
+    name: 'Réussir le Simon',
     mac: 'SIMON',
     accomplished: false,
   },
   {
-    name: 'Brancher les câbles',
-    mac: 'CABLE',
+    name: 'Placer la pièce',
+    mac: 'SOCLE',
     accomplished: false,
   },
 ];
@@ -78,11 +78,11 @@ const taskGame: TasksGame = {
 };
 
 const tasks: Tasks = {
-  CABLE: taskGame,
   CARDSWIPE: taskGame,
   KEYCODE: taskGame,
   QRCODE: taskGame,
   SIMON: taskGame,
+  SOCLE: taskGame,
 };
 
 export const initGame: GameModel = {
@@ -115,30 +115,6 @@ export const initGame: GameModel = {
       isAlive: true,
       personalTasks: JSON.parse(JSON.stringify(personalTask)),
     },
-    // {
-    //   name: 'Joueur 4',
-    //   mac: '0013a20041e54aeb',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 5',
-    //   mac: '0013a20041a72961',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
-    // {
-    //   name: 'Joueur 6',
-    //   mac: '0013a20041c3475c',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isAlive: true,
-    //   personalTasks: [],
-    // },
   ],
   start: false,
   vote: [],
@@ -146,3 +122,11 @@ export const initGame: GameModel = {
   desabotage: 0,
   tasks,
 };
+
+export enum MAC {
+  CARDSWIPE = 'CARDSWIPE',
+  KEYCODE = 'KEYCODE',
+  SIMON = 'SIMON',
+  QRCODE = 'QRCODE',
+  SOCLE = 'SOCLE',
+}

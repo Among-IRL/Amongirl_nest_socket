@@ -6,6 +6,7 @@ import { DesabotageService } from './services/desabotage.service';
 import { QrCodeService } from './services/qr-code.service';
 import { CardSwipService } from './services/card-swip.service';
 import { KeyCodeService } from './services/key-code.service';
+import { SocleService } from './services/socle.service';
 
 @Module({
   imports: [],
@@ -18,6 +19,7 @@ import { KeyCodeService } from './services/key-code.service';
     QrCodeService,
     CardSwipService,
     KeyCodeService,
+    SocleService,
   ],
 })
-export class SocketModule { }
+export class SocketModule {}

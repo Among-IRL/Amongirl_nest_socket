@@ -6,17 +6,17 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameService } from './services/game.service';
-import { GameModel, Player, RolePlayer, Task } from './models/game.model';
+import { GameModel, MAC, Player, RolePlayer, Task } from './models/game.model';
 import { SimonService } from './services/simon.service';
 import { DesabotageService } from './services/desabotage.service';
 import { QrCodeService } from './services/qr-code.service';
 import { CardSwipService } from './services/card-swip.service';
 import { KeyCodeService } from './services/key-code.service';
+import { SocleService } from './services/socle.service';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -31,6 +31,7 @@ export class SocketGateway
     private readonly simonService: SimonService,
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
+    private readonly socleService: SocleService,
   ) {}
 
   @WebSocketServer()
@@ -70,22 +71,30 @@ export class SocketGateway
       }
     });
 
+    this.socleService.observableLed.subscribe((led: string) => {
+      this.handleTaskLedSocle(led);
+    })
+
     this.gameService.observableTaskComplete.subscribe((task: string) => {
       switch (task) {
-        case 'QRCODE':
+        case MAC.QRCODE:
           this.handleTaskCompletedQrCode();
           break;
 
-        case 'CARDSWIPE':
+        case MAC.CARDSWIPE:
           this.handleTaskCompletedTaskCardSwip();
           break;
 
-        case 'KEYCODE':
+        case MAC.KEYCODE:
           this.handleTaskCompletedKeyCode();
           break;
 
-        case 'SIMON':
+        case MAC.SIMON:
           this.handleTaskCompletedSimon();
+          break;
+
+        case MAC.SOCLE:
+          this.handleTaskCompletedSocle();
           break;
       }
     });
@@ -190,7 +199,7 @@ export class SocketGateway
     }
   }
 
-  handleEnableTaskQrCode(player: Player) {
+  handleEnableTaskQrCode() {
     this.logger.log('enableTaskQrCode');
     this.server.emit('enableTaskQrCode');
   }
@@ -236,33 +245,46 @@ export class SocketGateway
 
   @SubscribeMessage('startTask')
   handleStartTask(@MessageBody() data: { task: Task; player: Player }) {
-    if (data.task.mac === 'CARDSWIPE') {
-      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
-        this.handleEnableTaskCardSwip();
-      } else {
-        this.server.emit('startTask', { CARDSWIPE: 'CARDSWIPE is pending' });
-      }
-    }
-    if (data.task.mac === 'KEYCODE') {
-      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
-        this.handleEnableTaskKeyCode();
-      } else {
-        this.server.emit('startTask', { KEYCODE: 'KEYCODE is pending' });
-      }
-    }
-    if (data.task.mac === 'SIMON') {
-      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
-        this.handleTaskSimonEnable();
-      } else {
-        this.server.emit('startTask', { KEYCODE: 'SIMON is pending' });
-      }
-    }
-    if (data.task.mac === 'QRCODE') {
-      if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
-        this.handleEnableTaskQrCode(data.player);
-      } else {
-        this.server.emit('startTask', { KEYCODE: 'QRCODE is pending' });
-      }
+    switch (data.task.mac) {
+      case MAC.CARDSWIPE:
+        if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+          this.handleEnableTaskCardSwip();
+        } else {
+          this.server.emit('startTask', {
+            CARDSWIPE: `${MAC.CARDSWIPE} is pending`,
+          });
+        }
+        break;
+      case MAC.KEYCODE:
+        if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+          this.handleEnableTaskKeyCode();
+        } else {
+          this.server.emit('startTask', {
+            KEYCODE: `${MAC.KEYCODE} is pending`,
+          });
+        }
+        break;
+      case MAC.SIMON:
+        if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+          this.handleTaskSimonEnable();
+        } else {
+          this.server.emit('startTask', { SIMON: `${MAC.SIMON} is pending` });
+        }
+        break;
+      case MAC.QRCODE:
+        if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+          this.handleEnableTaskQrCode();
+        } else {
+          this.server.emit('startTask', { QRCODE: `${MAC.QRCODE} is pending` });
+        }
+        break;
+      case MAC.SOCLE:
+        if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
+          this.handleEnableTaskSocle();
+        } else {
+          this.server.emit('startTask', { SOCLE: `${MAC.SOCLE} is pending` });
+        }
+        break;
     }
     this.logger.log('startTask', data);
   }
@@ -285,7 +307,6 @@ export class SocketGateway
 
   @SubscribeMessage('taskKeyCode')
   handleTaskKeyCode(@MessageBody() data: { keyPressed: string }) {
-    // this.logger.log('taskKeyCode', data);
     this.keycodeService.onKeyPressed(data.keyPressed);
   }
 
@@ -293,7 +314,6 @@ export class SocketGateway
   handleStartGame(@MessageBody() data: any) {
     this.logger.log('startGame');
     this.gameService.startGame();
-    console.log(JSON.stringify(this.game, null, 2));
     this.server.emit('startGame', this.game);
   }
 
@@ -457,40 +477,44 @@ export class SocketGateway
   private handleTaskCodeToFound(code: string[]) {
     this.logger.log('CodeToFound', code);
     this.server.emit('taskCodeToFound', code);
-    // FOR DEBUG MASTERMIND
-    // if (code.length > 0) {
-    //   const keysValues = {
-    //     '65': 'A',
-    //     '66': 'B',
-    //     '67': 'C',
-    //     '68': 'D',
-    //     '49': '1',
-    //     '50': '2',
-    //     '51': '3',
-    //     '52': '4',
-    //     '53': '5',
-    //     '54': '6',
-    //     '55': '7',
-    //     '56': '8',
-    //     '57': '9',
-    //     '48': '0',
-    //   };
-    //   setInterval(() => {
-    //     const randomNumber =
-    //       Object.keys(keysValues)[Math.floor(Math.random() * (12 - 0 + 1))];
-    //     // this.handleTaskKeyPressed(randomNumber);
-    //     this.handleTaskKeyCode({ keyPressed: randomNumber });
-    //   }, 2000);
-    // }
   }
 
   private handleTaskKeyPressed(key: string) {
-    // this.logger.log('KeyPressed', key);
     this.server.emit('taskKeyPressed', key);
   }
 
   private handleScoreSimon(score: string) {
     this.logger.log('scoreSimon', score);
     this.server.emit('scoreSimon', score);
+  }
+
+  private handleDisableTaskSocle() {
+    this.logger.log('disableTaskSocle');
+    this.server.emit('disableTaskSocle');
+  }
+
+  private handleEnableTaskSocle() {
+    this.logger.log('enableTaskSocle');
+    this.server.emit('enableTaskSocle');
+    this.socleService.startSocle();
+  }
+
+  private handleTaskCompletedSocle() {
+    this.logger.log('taskCompletedSocle');
+    this.server.emit('taskCompletedSocle', this.game);
+  }
+
+  @SubscribeMessage('taskSocle')
+  handleTaskSocle(@MessageBody() data: { button: number }) {
+    this.logger.log('taskSocle', data);
+    if (data) {
+      this.socleService.positionPiece(data.button);
+      console.log(data.button);
+    }
+  }
+
+  private handleTaskLedSocle(led: string) {
+    this.logger.log('taskLedSocle', { led });
+    this.server.emit('taskLedSocle', { led });
   }
 }

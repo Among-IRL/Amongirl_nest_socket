@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import {
   GameModel,
   initGame,
+  MAC,
   personalTask,
   Player,
   RolePlayer,
@@ -12,6 +13,7 @@ import { QrCodeService } from './qr-code.service';
 import { CardSwipService } from './card-swip.service';
 import { KeyCodeService } from './key-code.service';
 import { SimonService } from './simon.service';
+import { SocleService } from './socle.service';
 
 @Injectable()
 export class GameService {
@@ -20,12 +22,13 @@ export class GameService {
     private readonly cardSwipeService: CardSwipService,
     private readonly keyCodeService: KeyCodeService,
     private readonly simonService: SimonService,
+    private readonly socleService: SocleService,
   ) {
     this.qrCodeService.observableTaskCompleted.subscribe(
       (isComplete: boolean) => {
         if (isComplete) {
-          this.taskCompleted('QRCODE');
-          this.subjectTaskComplete.next('QRCODE');
+          this.taskCompleted(MAC.QRCODE);
+          this.subjectTaskComplete.next(MAC.QRCODE);
         }
       },
     );
@@ -33,8 +36,8 @@ export class GameService {
     this.cardSwipeService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
-          this.taskCompleted('CARDSWIPE');
-          this.subjectTaskComplete.next('CARDSWIPE');
+          this.taskCompleted(MAC.CARDSWIPE);
+          this.subjectTaskComplete.next(MAC.CARDSWIPE);
         }
       },
     );
@@ -42,8 +45,8 @@ export class GameService {
     this.keyCodeService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
-          this.taskCompleted('KEYCODE');
-          this.subjectTaskComplete.next('KEYCODE');
+          this.taskCompleted(MAC.KEYCODE);
+          this.subjectTaskComplete.next(MAC.KEYCODE);
         }
       },
     );
@@ -51,8 +54,17 @@ export class GameService {
     this.simonService.observableTaskCompleted.subscribe(
       (isCompleted: boolean) => {
         if (isCompleted) {
-          this.taskCompleted('SIMON');
-          this.subjectTaskComplete.next('SIMON');
+          this.taskCompleted(MAC.SIMON);
+          this.subjectTaskComplete.next(MAC.SIMON);
+        }
+      },
+    );
+
+    this.socleService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted(MAC.SOCLE);
+          this.subjectTaskComplete.next(MAC.SOCLE);
         }
       },
     );

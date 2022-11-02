@@ -1,80 +1,84 @@
 import { Injectable } from '@nestjs/common';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { GameModel, RolePlayer } from '../models/game.model';
+import {
+  GameModel,
+  initGame,
+  MAC,
+  personalTask,
+  Player,
+  RolePlayer,
+  Task,
+} from '../models/game.model';
+import { QrCodeService } from './qr-code.service';
+import { CardSwipService } from './card-swip.service';
+import { KeyCodeService } from './key-code.service';
+import { SimonService } from './simon.service';
+import { SocleService } from './socle.service';
 
-const initGame: GameModel = {
-  buzzer: {
-    mac: '0013a20041582fc1',
-    isActive: false,
-  },
-  players: [
-    {
-      name: 'Joueur 1',
-      mac: '0013a20041a72956',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-    {
-      name: 'Joueur 2',
-      mac: '0013a20041582fc0',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-    {
-      name: 'Joueur 3',
-      mac: '0013a20041a72913',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-    {
-      name: 'Joueur 4',
-      mac: '0013a20041e54aeb',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-    {
-      name: 'Joueur 5',
-      mac: '0013a20041a72961',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-    {
-      name: 'Joueur 6',
-      mac: '0013a20041c3475c',
-      role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true,
-    },
-  ],
-  rooms: [
-    {
-      name: 'Réparer ordinateur de Colombe',
-      mac: '0013a20041582eee',
-      task: false,
-    },
-    { name: 'Supprimer les absences', mac: '0013a20041c34ac1', task: false },
-    { name: 'Réparer le robinet', mac: '0013a20041c34b12', task: false },
-    { name: 'Fermer le distributeur de papier', mac: '0013a20041a72946', task: false },
-    { name: 'Réparer la machine à café', mac: '0013a20041a713bc', task: false },
-    //puce fonctionne pas
-    // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-    { name: 'Ranger les affaires IOT', mac: '0013a20041582fb1', task: false },
-    // { name: 'Réparer le ditributeur', mac: '', task: false },
-  ],
-  start: false,
-};
 @Injectable()
 export class GameService {
-  game: GameModel = { ...initGame };
+  constructor(
+    private readonly qrCodeService: QrCodeService,
+    private readonly cardSwipeService: CardSwipService,
+    private readonly keyCodeService: KeyCodeService,
+    private readonly simonService: SimonService,
+    private readonly socleService: SocleService,
+  ) {
+    this.qrCodeService.observableTaskCompleted.subscribe(
+      (isComplete: boolean) => {
+        if (isComplete) {
+          this.taskCompleted(MAC.QRCODE);
+          this.subjectTaskComplete.next(MAC.QRCODE);
+        }
+      },
+    );
+
+    this.cardSwipeService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted(MAC.CARDSWIPE);
+          this.subjectTaskComplete.next(MAC.CARDSWIPE);
+        }
+      },
+    );
+
+    this.keyCodeService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted(MAC.KEYCODE);
+          this.subjectTaskComplete.next(MAC.KEYCODE);
+        }
+      },
+    );
+
+    this.simonService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted(MAC.SIMON);
+          this.subjectTaskComplete.next(MAC.SIMON);
+        }
+      },
+    );
+
+    this.socleService.observableTaskCompleted.subscribe(
+      (isCompleted: boolean) => {
+        if (isCompleted) {
+          this.taskCompleted(MAC.SOCLE);
+          this.subjectTaskComplete.next(MAC.SOCLE);
+        }
+      },
+    );
+  }
+
+  game: GameModel = JSON.parse(JSON.stringify(initGame));
   private subjectGame: BehaviorSubject<GameModel> =
-    new BehaviorSubject<GameModel>({ ...initGame });
+    new BehaviorSubject<GameModel>(JSON.parse(JSON.stringify(initGame)));
   public observableGame: Observable<GameModel> =
     this.subjectGame.asObservable();
+  private subjectTaskComplete: BehaviorSubject<string> =
+    new BehaviorSubject<string>('');
+  public observableTaskComplete: Observable<string> =
+    this.subjectTaskComplete.asObservable();
 
   public startGame() {
     this.game.players[this.random(this.game.players.length)].role =
@@ -87,28 +91,41 @@ export class GameService {
     return Math.floor(Math.random() * max);
   }
 
-  public selectPlayer(name: string): GameModel {
-    this.game.players.push({
+  public selectPlayer(name: string) {
+    const player = {
       name,
-      mac: '0013a20041c3475c',
+      mac: 'JOUEUR' + (this.game.players.length + 1),
       role: RolePlayer.PLAYER,
-      report: false,
-      isAlive: true
-    })
+      hasReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    };
+    this.game.players.push(player);
     this.subjectGame.next(this.game);
-    return this.game;
+    return { game: this.game, currentPlayer: player };
   }
 
-  private getIndexPlayer(name: string) {
+  getIndexPlayer(name: string) {
     return this.game.players.findIndex((player) => player.name === name);
   }
 
-  private getIndexRoom(mac: string) {
-    return this.game.rooms.findIndex((room) => room.mac === mac);
+  // private getIndexGlobalTasks(mac: string) {
+  //   return this.game.globalTasks.findIndex((task) => task.mac === mac);
+  // }
+  private getPersonalTasksByPlayer(macTask: string, index: number) {
+    return this.game.players[index].personalTasks.findIndex(
+      (task) => task.mac === macTask,
+    );
   }
 
   private getIndexPlayerByMac(mac: string) {
     return this.game.players.findIndex((player) => player.mac === mac);
+  }
+
+  public getPlayerByMac(mac: string) {
+    return this.game.players.find((player) => {
+      return player.mac === mac;
+    });
   }
 
   public deathPlayer(mac: string): {
@@ -118,7 +135,10 @@ export class GameService {
   } {
     const index = this.getIndexPlayerByMac(mac);
     this.game.players[index].isAlive = false;
+    console.log('before', this.game.players);
     this.subjectGame.next(this.game);
+    console.log('after', this.game.players);
+
     return {
       name: this.game.players[index].name,
       mac: this.game.players[index].mac,
@@ -126,125 +146,30 @@ export class GameService {
     };
   }
 
-  public accomplishedTask(
-    mac: string,
-    status: boolean,
-  ): {
-    name: string;
-    mac: string;
-    task: boolean;
-  } {
-    const index = this.getIndexRoom(mac);
-    this.game.rooms[index].task = status;
-    this.subjectGame.next(this.game);
-    return {
-      name: this.game.rooms[index].name,
-      mac: this.game.rooms[index].mac,
-      task: this.game.rooms[index].task,
-    };
-  }
-
   public getGame(): GameModel {
     return this.game;
   }
 
-  public buzzer(mac: string) {
+  public buzzer() {
     this.game.buzzer.isActive = true;
     return { mac: this.game.buzzer.mac, status: this.game.buzzer.isActive };
   }
 
   public report(name: string): GameModel {
     const index = this.getIndexPlayer(name);
-    this.game.players[index].report = true;
+    this.game.players[index].hasReport = true;
     this.subjectGame.next(this.game);
     return this.game;
   }
 
-  public resetReport() {
-    this.game.players.forEach((player) => (player.report = false));
-    this.subjectGame.next(this.game);
-  }
-
-  public resetBuzzer() {
+  public resetVote() {
+    this.game.players.forEach((player) => (player.hasReport = false));
     this.game.buzzer.isActive = false;
-    this.subjectGame.next(this.game);
+    this.game.vote = [];
   }
 
   public resetGame(): GameModel {
-    this.game = {
-      buzzer: {
-        mac: '0013a20041582fc1',
-        isActive: false,
-      },
-      players: [
-        {
-          name: 'Joueur 1',
-          mac: '0013a20041a72956',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-        {
-          name: 'Joueur 2',
-          mac: '0013a20041582fc0',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-        {
-          name: 'Joueur 3',
-          mac: '0013a20041a72913',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-        {
-          name: 'Joueur 4',
-          mac: '0013a20041e54aeb',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-        {
-          name: 'Joueur 5',
-          mac: '0013a20041a72961',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-        {
-          name: 'Joueur 6',
-          mac: '0013a20041c3475c',
-          role: RolePlayer.PLAYER,
-          report: false,
-          isAlive: true,
-        },
-      ],
-      rooms: [
-        {
-          name: 'Réparer ordinateur de Colombe',
-          mac: '0013a20041582eee',
-          task: false,
-        },
-        {
-          name: 'Supprimer les absences',
-          mac: '0013a20041c34ac1',
-          task: false,
-        },
-        { name: 'Réparer le robinet', mac: '0013a20041c34b12', task: false },
-        {
-          name: 'Fermer le distributeur de papier',
-          mac: '0013a20041a72946',
-          task: false,
-        },
-        { name: 'Réparer la machine à café', mac: '0013a20041a713bc', task: false },
-        //puce fonctionne pas
-        // { name: 'Effacer le tableau', mac: '0013a20041a7133c', task: false },
-        { name: 'Ranger les affaires IOT', mac: '0013a20041582fb1', task: false },
-        // { name: 'Réparer le ditributeur', mac: '', task: false },
-      ],
-      start: false,
-    };
+    this.game = JSON.parse(JSON.stringify(initGame));
     this.subjectGame.next(this.game);
     return this.game;
   }
@@ -271,6 +196,73 @@ export class GameService {
     ) {
       return true;
     }
-    return this.game.rooms.every((room) => room.task);
+    return this.game.players.every((player: Player) =>
+      player.personalTasks.every((task: Task) => task.accomplished),
+    );
+  }
+
+  public mostPlayerVote(vote) {
+    if (vote.length == 0) return { mostPlayerVote: '', count: 0 };
+    const modeMap = {};
+    let maxEl = vote[0];
+    let maxCount = 0;
+    for (let i = 0; i < vote.length; i++) {
+      const el = vote[i];
+      if (modeMap[el] == null) modeMap[el] = 1;
+      else modeMap[el]++;
+
+      if (modeMap[el] > maxCount) {
+        maxEl = el;
+        maxCount = modeMap[el];
+      }
+      for (const nom in modeMap) {
+        if (modeMap[nom] == modeMap[maxEl] && nom != maxEl) {
+          maxEl = '';
+          maxCount = modeMap[el];
+        }
+      }
+    }
+    return { mostPlayerVote: maxEl, count: maxCount };
+  }
+
+  onSabotage(isSabotage: boolean) {
+    this.game.sabotage = isSabotage;
+    this.game.desabotage = 2;
+    this.subjectGame.next(this.game);
+  }
+
+  taskActivateByPlayer(task: Task, player: Player): boolean {
+    if (!this.game.tasks[task.mac].isPendingBy) {
+      this.game.tasks[task.mac].isPendingBy = player.mac;
+      this.subjectGame.next(this.game);
+      return true;
+    }
+  }
+
+  taskCompleted(task: string) {
+    const indexPlayer = this.game.players.findIndex(
+      (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
+    );
+    if (indexPlayer > 0) {
+      const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
+        (taskPlayer: Task) => taskPlayer.mac === task,
+      );
+      this.game.players[indexPlayer].personalTasks[indexTask].accomplished =
+        true;
+      this.game.tasks[task].isPendingBy = '';
+      this.game.tasks[task].accomplished++;
+      this.subjectGame.next(this.game);
+    }
+  }
+
+  timeDownTask(task: string) {
+    this.game.tasks[task].isPendingBy = '';
+    this.subjectGame.next(this.game);
+  }
+
+  onDesabotage() {
+    this.game.desabotage = 0;
+    this.game.sabotage = false;
+    this.subjectGame.next(this.game);
   }
 }

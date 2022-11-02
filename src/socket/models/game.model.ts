@@ -3,18 +3,32 @@ export enum RolePlayer {
   SABOTEUR = 'saboteur',
 }
 
-interface Rooms {
+export interface Task {
   name: string;
   mac: string;
-  task: boolean;
+  accomplished: boolean;
 }
 
-interface Players {
+export interface Player {
   name: string;
   mac: string;
   isAlive: boolean;
   role: RolePlayer;
-  report: boolean;
+  hasReport: boolean;
+  personalTasks: Task[];
+}
+
+export interface Tasks {
+  CARDSWIPE: TasksGame;
+  KEYCODE: TasksGame;
+  QRCODE: TasksGame;
+  SIMON: TasksGame;
+  SOCLE: TasksGame;
+}
+
+export interface TasksGame {
+  accomplished: number;
+  isPendingBy: string;
 }
 
 export interface GameModel {
@@ -22,7 +36,97 @@ export interface GameModel {
     mac: string;
     isActive: boolean;
   };
-  players: Players[];
-  rooms: Rooms[];
+  players: Player[];
   start: boolean;
+  vote: string[];
+  sabotage: boolean;
+  desabotage: number;
+  tasks: Tasks;
+}
+
+export const personalTask: Task[] = [
+  {
+    name: 'Swiper la carte',
+    mac: 'CARDSWIPE',
+    accomplished: false,
+  },
+  {
+    name: 'Code à rentrer',
+    mac: 'KEYCODE',
+    accomplished: false,
+  },
+  {
+    name: 'Scanner le QR-CODE',
+    mac: 'QRCODE',
+    accomplished: false,
+  },
+  {
+    name: 'Réussir le Simon',
+    mac: 'SIMON',
+    accomplished: false,
+  },
+  {
+    name: 'Placer la pièce',
+    mac: 'SOCLE',
+    accomplished: false,
+  },
+];
+
+const taskGame: TasksGame = {
+  accomplished: 0,
+  isPendingBy: '',
+};
+
+const tasks: Tasks = {
+  CARDSWIPE: taskGame,
+  KEYCODE: taskGame,
+  QRCODE: taskGame,
+  SIMON: taskGame,
+  SOCLE: taskGame,
+};
+
+export const initGame: GameModel = {
+  buzzer: {
+    mac: '0013a20041582fc1',
+    isActive: false,
+  },
+  players: [
+    {
+      name: 'Joueur 1',
+      mac: 'JOUEUR1',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+    {
+      name: 'Joueur 2',
+      mac: 'JOUEUR2',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+    {
+      name: 'Joueur 3',
+      mac: 'JOUEUR3',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask)),
+    },
+  ],
+  start: false,
+  vote: [],
+  sabotage: false,
+  desabotage: 0,
+  tasks,
+};
+
+export enum MAC {
+  CARDSWIPE = 'CARDSWIPE',
+  KEYCODE = 'KEYCODE',
+  SIMON = 'SIMON',
+  QRCODE = 'QRCODE',
+  SOCLE = 'SOCLE',
 }

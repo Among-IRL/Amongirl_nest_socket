@@ -20,8 +20,7 @@ import { SocleService } from './services/socle.service';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private game: GameModel;
 
   constructor(
@@ -32,7 +31,7 @@ export class SocketGateway
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
     private readonly socleService: SocleService,
-  ) {}
+  ) { }
 
   @WebSocketServer()
   server: Server;
@@ -423,11 +422,12 @@ export class SocketGateway
   }
 
   @SubscribeMessage('report')
-  handleReport(@MessageBody() data: { name: string }) {
+  handleReport(@MessageBody() data: { name: string, macDeadPlayer: string }) {
     this.logger.log('data name = ', data.name);
-    const report = this.gameService.report(data.name);
+    const report = this.gameService.report(data.name, data.macDeadPlayer);
     this.countDownMeeting(true);
     this.server.emit('report', report);
+    this.server.emit('deadReport', { mac: data.macDeadPlayer });
   }
 
   @SubscribeMessage('sabotage')

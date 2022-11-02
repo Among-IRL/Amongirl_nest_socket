@@ -20,8 +20,7 @@ import { SocleService } from './services/socle.service';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private game: GameModel;
 
   constructor(
@@ -423,11 +422,36 @@ export class SocketGateway
   }
 
   @SubscribeMessage('report')
-  handleReport(@MessageBody() data: { name: string }) {
+  handleReport(@MessageBody() data: { name: string, macDeadPlayer: string }) {
     this.logger.log('data name = ', data.name);
-    const report = this.gameService.report(data.name);
+    const report = this.gameService.report(data.name, data.macDeadPlayer);
     this.countDownMeeting(true);
     this.server.emit('report', report);
+    this.server.emit('deadReport', { macDeadPlayer: data.macDeadPlayer });
+  }
+
+  @SubscribeMessage('sabotage')
+  handleSabotage(@MessageBody() data: { isSabotage: boolean }) {
+    this.logger.log('sabotage', data);
+    this.gameService.onSabotage(data.isSabotage);
+  }
+
+  handleOnSabotage() {
+    this.logger.log('onSabotage', this.game.sabotage);
+    this.handleEnableDesabotage();
+    this.server.emit('sabotage', this.game.sabotage);
+  }
+
+  @SubscribeMessage('vote')
+  handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
+    const playerFrom: Player = this.gameService.getPlayerByMac(data.macFrom);
+    if (data.macTo) {
+      const playerTo: Player = this.gameService.getPlayerByMac(data.macTo);
+      this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
+      this.game.vote.push(playerTo.name);
+    } else {
+      this.logger.log(playerFrom.name + ' vote for nobody');
+    }
   }
 
   @SubscribeMessage('sabotage')

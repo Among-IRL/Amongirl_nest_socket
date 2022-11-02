@@ -94,9 +94,10 @@ export class GameService {
   public selectPlayer(name: string) {
     const player = {
       name,
-      mac: 'JOUEUR' + (this.game.players.length + 1),
+      mac: 'PLAYER' + (this.game.players.length + 1),
       role: RolePlayer.PLAYER,
       hasReport: false,
+      isDeadReport: false,
       isAlive: true,
       personalTasks: JSON.parse(JSON.stringify(personalTask)),
     };
@@ -155,9 +156,11 @@ export class GameService {
     return { mac: this.game.buzzer.mac, status: this.game.buzzer.isActive };
   }
 
-  public report(name: string): GameModel {
-    const index = this.getIndexPlayer(name);
-    this.game.players[index].hasReport = true;
+  public report(name: string, mac: string): GameModel {
+    const indexPlayerReport = this.getIndexPlayer(name);
+    const indexDeadPlayerReported = this.getIndexPlayerByMac(mac);
+    this.game.players[indexPlayerReport].hasReport = true;
+    this.game.players[indexDeadPlayerReported].isDeadReport = true;
     this.subjectGame.next(this.game);
     return this.game;
   }

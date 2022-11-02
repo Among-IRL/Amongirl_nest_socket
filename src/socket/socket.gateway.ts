@@ -454,30 +454,6 @@ export class SocketGateway
     }
   }
 
-  @SubscribeMessage('sabotage')
-  handleSabotage(@MessageBody() data: { isSabotage: boolean }) {
-    this.logger.log('sabotage', data);
-    this.gameService.onSabotage(data.isSabotage);
-  }
-
-  handleOnSabotage() {
-    this.logger.log('onSabotage', this.game.sabotage);
-    this.handleEnableDesabotage();
-    this.server.emit('sabotage', this.game.sabotage);
-  }
-
-  @SubscribeMessage('vote')
-  handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
-    const playerFrom: Player = this.gameService.getPlayerByMac(data.macFrom);
-    if (data.macTo) {
-      const playerTo: Player = this.gameService.getPlayerByMac(data.macTo);
-      this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
-      this.game.vote.push(playerTo.name);
-    } else {
-      this.logger.log(playerFrom.name + ' vote for nobody');
-    }
-  }
-
   @SubscribeMessage('resetGame')
   handleResetGame(@MessageBody() data: any) {
     this.logger.log('resetGame ');

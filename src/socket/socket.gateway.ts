@@ -31,7 +31,17 @@ export class SocketGateway
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
     private readonly socleService: SocleService,
-  ) { }
+  ) {
+    setTimeout(() => {
+      this.handleSelectPlayer({ name: "Ldq" });
+      this.handleSelectPlayer({ name: "Topaz" });
+      this.handleSelectPlayer({ name: "Moi" });
+      this.handleDeathPlayer({ mac: "PLAYER2" });
+      setTimeout(() => {
+        this.handleReport({ name: 'Topaz', macDeadPlayer: 'PLAYER2' });
+      }, 5000)
+    }, 10000);
+  }
 
   @WebSocketServer()
   server: Server;
@@ -427,7 +437,7 @@ export class SocketGateway
     const report = this.gameService.report(data.name, data.macDeadPlayer);
     this.countDownMeeting(true);
     this.server.emit('report', report);
-    this.server.emit('deadReport', { mac: data.macDeadPlayer });
+    this.server.emit('deadReport', { macDeadPlayer: data.macDeadPlayer });
   }
 
   @SubscribeMessage('sabotage')

@@ -16,6 +16,7 @@ export interface Player {
   role: RolePlayer;
   hasReport: boolean;
   isDeadReport: boolean;
+
   personalTasks: Task[];
 }
 

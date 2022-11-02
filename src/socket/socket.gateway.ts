@@ -31,17 +31,7 @@ export class SocketGateway
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
     private readonly socleService: SocleService,
-  ) {
-    setTimeout(() => {
-      this.handleSelectPlayer({ name: "Ldq" });
-      this.handleSelectPlayer({ name: "Topaz" });
-      this.handleSelectPlayer({ name: "Moi" });
-      this.handleDeathPlayer({ mac: "PLAYER2" });
-      setTimeout(() => {
-        this.handleReport({ name: 'Topaz', macDeadPlayer: 'PLAYER2' });
-      }, 5000)
-    }, 10000);
-  }
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -438,6 +428,30 @@ export class SocketGateway
     this.countDownMeeting(true);
     this.server.emit('report', report);
     this.server.emit('deadReport', { macDeadPlayer: data.macDeadPlayer });
+  }
+
+  @SubscribeMessage('sabotage')
+  handleSabotage(@MessageBody() data: { isSabotage: boolean }) {
+    this.logger.log('sabotage', data);
+    this.gameService.onSabotage(data.isSabotage);
+  }
+
+  handleOnSabotage() {
+    this.logger.log('onSabotage', this.game.sabotage);
+    this.handleEnableDesabotage();
+    this.server.emit('sabotage', this.game.sabotage);
+  }
+
+  @SubscribeMessage('vote')
+  handleVote(@MessageBody() data: { macFrom: string; macTo: string }) {
+    const playerFrom: Player = this.gameService.getPlayerByMac(data.macFrom);
+    if (data.macTo) {
+      const playerTo: Player = this.gameService.getPlayerByMac(data.macTo);
+      this.logger.log(playerFrom.name + ' vote for ' + playerTo.name);
+      this.game.vote.push(playerTo.name);
+    } else {
+      this.logger.log(playerFrom.name + ' vote for nobody');
+    }
   }
 
   @SubscribeMessage('sabotage')

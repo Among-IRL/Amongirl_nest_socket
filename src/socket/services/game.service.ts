@@ -79,6 +79,16 @@ export class GameService {
     new BehaviorSubject<string>('');
   public observableTaskComplete: Observable<string> =
     this.subjectTaskComplete.asObservable();
+  private subjectReset: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(
+    false,
+  );
+  public observableReset: Observable<boolean> =
+    this.subjectReset.asObservable();
+  private subjectTaskNotComplete: BehaviorSubject<string> = new BehaviorSubject<string>(
+    "",
+  );
+  public observableTaskNotComplete: Observable<string> =
+    this.subjectTaskNotComplete.asObservable();
 
   public startGame() {
     this.game.players[this.random(this.game.players.length)].role =
@@ -95,7 +105,7 @@ export class GameService {
     const player = {
       name,
       mac: 'PLAYER' + (this.game.players.length + 1),
-      role: RolePlayer.SABOTEUR,
+      role: RolePlayer.PLAYER,
       hasReport: false,
       isDeadReport: false,
       isAlive: true,
@@ -133,14 +143,14 @@ export class GameService {
     name: string;
     mac: string;
     isAlive: boolean;
+    players: Player[];
   } {
     const index = this.getIndexPlayerByMac(mac);
     this.game.players[index].isAlive = false;
-    console.log('before', this.game.players);
     this.subjectGame.next(this.game);
-    console.log('after', this.game.players);
 
     return {
+      players: this.game.players,
       name: this.game.players[index].name,
       mac: this.game.players[index].mac,
       isAlive: this.game.players[index].isAlive,
@@ -159,8 +169,6 @@ export class GameService {
   public report(name: string, mac: string): GameModel {
     const indexPlayerReport = this.getIndexPlayer(name);
     const indexDeadPlayerReported = this.getIndexPlayerByMac(mac);
-    console.log('Players Report : ', this.game.players[indexDeadPlayerReported]);
-    console.log('MAC : ', mac);
     this.game.players[indexPlayerReport].hasReport = true;
     this.game.players[indexDeadPlayerReported].isDeadReport = true;
     this.subjectGame.next(this.game);
@@ -176,6 +184,7 @@ export class GameService {
   public resetGame(): GameModel {
     this.game = JSON.parse(JSON.stringify(initGame));
     this.subjectGame.next(this.game);
+    this.subjectReset.next(true);
     return this.game;
   }
 
@@ -260,14 +269,37 @@ export class GameService {
     }
   }
 
-  timeDownTask(task: string) {
-    this.game.tasks[task].isPendingBy = '';
-    this.subjectGame.next(this.game);
+  timeDownTask(task: string, player: string) {
+    const indexPlayer = this.game.players.findIndex(
+      (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
+    );
+    if (indexPlayer > 0) {
+      const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
+        (taskPlayer: Task) => taskPlayer.mac === task,
+      );
+      if (
+        !this.game.players[indexPlayer].personalTasks[indexTask].accomplished
+      ) {
+        this.subjectTaskNotComplete.next(task);
+        this.game.tasks[task].isPendingBy = '';
+        this.subjectGame.next(this.game);
+      }
+    } else {
+      this.game.tasks[task].isPendingBy = '';
+      this.subjectGame.next(this.game);
+    }
   }
 
   onDesabotage() {
     this.game.desabotage = 0;
     this.game.sabotage = false;
     this.subjectGame.next(this.game);
+  }
+
+  taskDesactivateByPlayer(task: Task, player: Player) {
+    if (this.game.tasks[task.mac].isPendingBy === player.mac) {
+      this.game.tasks[task.mac].isPendingBy = '';
+      this.subjectGame.next(this.game);
+    }
   }
 }

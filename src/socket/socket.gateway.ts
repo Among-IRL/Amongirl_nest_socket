@@ -20,7 +20,8 @@ import { SocleService } from './services/socle.service';
 
 @WebSocketGateway()
 export class SocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private game: GameModel;
 
   constructor(
@@ -31,7 +32,7 @@ export class SocketGateway
     private readonly cardSwipService: CardSwipService,
     private readonly keycodeService: KeyCodeService,
     private readonly socleService: SocleService,
-  ) { }
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -39,6 +40,19 @@ export class SocketGateway
 
   afterInit(server: Server) {
     this.logger.log('Init');
+
+    this.gameService.observableTaskNotComplete.subscribe((task: string) => {
+      this.handleTaskNotComplete(task);
+    })
+    this.gameService.observableReset.subscribe((reset: boolean) => {
+      this.handleDisableTaskSocle();
+      this.handleDisableTaskQrCode();
+      this.handleDisableTaskSimon();
+      this.handleDisableDesabotage();
+      this.handleDisableTaskCardSwip();
+      this.handleDisableTaskKeyCode();
+      this.handleDisablePlayers();
+    });
     this.keycodeService.observableCodeToFound.subscribe((code: string[]) => {
       this.handleTaskCodeToFound(code);
     });
@@ -72,7 +86,7 @@ export class SocketGateway
 
     this.socleService.observableLed.subscribe((led: string) => {
       this.handleTaskLedSocle(led);
-    })
+    });
 
     this.gameService.observableTaskComplete.subscribe((task: string) => {
       switch (task) {
@@ -298,6 +312,29 @@ export class SocketGateway
     this.logger.log('startTask', data);
   }
 
+  @SubscribeMessage('stopTask')
+  handleStopTask(@MessageBody() data: { task: Task; player: Player }) {
+    this.gameService.taskDesactivateByPlayer(data.task, data.player);
+    switch (data.task.mac) {
+      case MAC.CARDSWIPE:
+        this.handleDisableTaskCardSwip();
+        break;
+      case MAC.KEYCODE:
+        this.handleDisableTaskKeyCode();
+        break;
+      case MAC.SIMON:
+        this.handleDisableTaskSimon();
+        break;
+      case MAC.QRCODE:
+        this.handleDisableTaskQrCode();
+        break;
+      case MAC.SOCLE:
+        this.handleDisableTaskSocle();
+        break;
+    }
+    this.logger.log('stopTask', data);
+  }
+
   handleEnableTaskKeyCode() {
     this.logger.log('enableTaskKeyCode');
     this.server.emit('enableTaskKeyCode');
@@ -353,7 +390,6 @@ export class SocketGateway
     countDown: number;
     vote: string;
   } {
-    
     let counter = 15;
     if (status) {
       const functionCounter = setInterval(() => {
@@ -370,7 +406,7 @@ export class SocketGateway
               if (!player.isAlive) {
                 this.server.emit('deadReport', { macDeadPlayer: player.mac });
               }
-            })
+            });
           }
           this.gameService.resetVote();
           clearInterval(functionCounter);
@@ -419,12 +455,13 @@ export class SocketGateway
   handletimerTaskDone(
     @MessageBody()
     data: {
+      macPlayer: string;
       macTask: string;
       accomplished: boolean;
     },
   ) {
-    this.gameService.timeDownTask(data.macTask);
     this.logger.log('timerTaskDone', data);
+    this.gameService.timeDownTask(data.macTask, data.macPlayer);
   }
 
   @SubscribeMessage('meeting')
@@ -439,7 +476,7 @@ export class SocketGateway
   }
 
   @SubscribeMessage('report')
-  handleReport(@MessageBody() data: { name: string, macDeadPlayer: string }) {
+  handleReport(@MessageBody() data: { name: string; macDeadPlayer: string }) {
     this.logger.log('data name = ', data.name);
     const report = this.gameService.report(data.name, data.macDeadPlayer);
     this.countDownMeeting(true);
@@ -496,6 +533,7 @@ export class SocketGateway
   }
 
   private handleTaskKeyPressed(key: string) {
+    this.logger.log('taskKeyPressed', key);
     this.server.emit('taskKeyPressed', key);
   }
 
@@ -525,12 +563,16 @@ export class SocketGateway
     this.logger.log('taskSocle', data);
     if (data) {
       this.socleService.positionPiece(data.button);
-      console.log(data.button);
     }
   }
 
   private handleTaskLedSocle(led: string) {
     this.logger.log('taskLedSocle', { led });
     this.server.emit('taskLedSocle', { led });
+  }
+
+  private handleTaskNotComplete(task: string) {
+    this.logger.log('taskNotComplete', task);
+    this.server.emit('taskNotComplete', { task, game: this.game });
   }
 }

@@ -12,8 +12,10 @@ export class SocleService {
   private randomPosition: number;
   private button: number;
   private isEnable: boolean;
+  private macPlayer: string;
 
-  public startSocle() {
+  public startSocle(macPlayer: string) {
+    this.macPlayer = macPlayer;
     this.isEnable = false;
     do {
       this.setPositionPiece();
@@ -24,7 +26,6 @@ export class SocleService {
 
   private setPositionPiece() {
     this.randomPosition = Math.floor(Math.random() * 3) + 1;
-    console.log('setpostion');
   }
   public positionPiece(button: number) {
     this.button = button;
@@ -35,5 +36,14 @@ export class SocleService {
 
   private activateLed() {
     this.subjectLed.next('led' + this.randomPosition);
+  }
+
+  getMacPlayer(): string {
+    return this.macPlayer;
+  }
+
+  endTask() {
+    this.macPlayer = '';
+    this.isEnable = false;
   }
 }

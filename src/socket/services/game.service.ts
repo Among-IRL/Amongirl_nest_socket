@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   GameModel,
@@ -84,9 +84,8 @@ export class GameService {
   );
   public observableReset: Observable<boolean> =
     this.subjectReset.asObservable();
-  private subjectTaskNotComplete: BehaviorSubject<string> = new BehaviorSubject<string>(
-    "",
-  );
+  private subjectTaskNotComplete: BehaviorSubject<string> =
+    new BehaviorSubject<string>('');
   public observableTaskNotComplete: Observable<string> =
     this.subjectTaskNotComplete.asObservable();
 
@@ -106,6 +105,7 @@ export class GameService {
       name,
       mac: 'PLAYER' + (this.game.players.length + 1),
       role: RolePlayer.PLAYER,
+      // role: RolePlayer.SABOTEUR,
       hasReport: false,
       isDeadReport: false,
       isAlive: true,
@@ -144,16 +144,19 @@ export class GameService {
     mac: string;
     isAlive: boolean;
     players: Player[];
+    isDeadReport: boolean;
+    game: GameModel;
   } {
     const index = this.getIndexPlayerByMac(mac);
     this.game.players[index].isAlive = false;
     this.subjectGame.next(this.game);
-
     return {
       players: this.game.players,
       name: this.game.players[index].name,
       mac: this.game.players[index].mac,
       isAlive: this.game.players[index].isAlive,
+      isDeadReport: this.game.players[index].isDeadReport,
+      game: this.game,
     };
   }
 
@@ -166,11 +169,14 @@ export class GameService {
     return { mac: this.game.buzzer.mac, status: this.game.buzzer.isActive };
   }
 
-  public report(name: string, mac: string): GameModel {
+  public report(name: string): GameModel {
     const indexPlayerReport = this.getIndexPlayer(name);
-    const indexDeadPlayerReported = this.getIndexPlayerByMac(mac);
     this.game.players[indexPlayerReport].hasReport = true;
-    this.game.players[indexDeadPlayerReported].isDeadReport = true;
+    this.game.players.forEach((playerCheck, index) => {
+      if (!playerCheck.isAlive) {
+        this.game.players[index].isDeadReport = true;
+      }
+    });
     this.subjectGame.next(this.game);
     return this.game;
   }
@@ -210,9 +216,16 @@ export class GameService {
     ) {
       return true;
     }
-    return this.game.players.every((player: Player) =>
-      player.personalTasks.every((task: Task) => task.accomplished),
-    );
+
+    return this.game.players.every((player: Player) => {
+      if (player.role === RolePlayer.SABOTEUR) {
+        return true;
+      } else {
+        return player.personalTasks.every(
+          (task: Task) => task.accomplished === true,
+        );
+      }
+    });
   }
 
   public mostPlayerVote(vote) {
@@ -257,7 +270,7 @@ export class GameService {
     const indexPlayer = this.game.players.findIndex(
       (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
     );
-    if (indexPlayer > 0) {
+    if (indexPlayer >= 0) {
       const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
         (taskPlayer: Task) => taskPlayer.mac === task,
       );
@@ -273,7 +286,7 @@ export class GameService {
     const indexPlayer = this.game.players.findIndex(
       (player: Player) => player.mac === this.game.tasks[task].isPendingBy,
     );
-    if (indexPlayer > 0) {
+    if (indexPlayer >= 0) {
       const indexTask = this.game.players[indexPlayer].personalTasks.findIndex(
         (taskPlayer: Task) => taskPlayer.mac === task,
       );

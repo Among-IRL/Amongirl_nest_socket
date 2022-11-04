@@ -7,10 +7,23 @@ export class CardSwipService {
     new BehaviorSubject<boolean>(false);
   public observableTaskCompleted: Observable<boolean> =
     this.subjectTaskCompleted.asObservable();
+  private macPlayer: string;
 
   onDetectedCard(isDetected: boolean) {
     if (isDetected) {
       this.subjectTaskCompleted.next(isDetected);
     }
+  }
+
+  startTask(macPlayer: string) {
+    this.macPlayer = macPlayer;
+  }
+
+  getMacPlayer(): string {
+    return this.macPlayer;
+  }
+
+  endTask() {
+    this.macPlayer = '';
   }
 }

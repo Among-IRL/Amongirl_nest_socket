@@ -43,14 +43,20 @@ export class SocketGateway
 
     this.gameService.observableTaskNotComplete.subscribe((task: string) => {
       this.handleTaskNotComplete(task);
-    })
+    });
+
     this.gameService.observableReset.subscribe((reset: boolean) => {
       this.handleDisableTaskSocle();
+      this.socleService.endTask();
       this.handleDisableTaskQrCode();
+      this.qrCodeService.endTask();
       this.handleDisableTaskSimon();
+      this.simonService.stopSimon();
       this.handleDisableDesabotage();
       this.handleDisableTaskCardSwip();
+      this.cardSwipService.endTask();
       this.handleDisableTaskKeyCode();
+      this.keycodeService.endTask();
       this.handleDisablePlayers();
     });
     this.keycodeService.observableCodeToFound.subscribe((code: string[]) => {
@@ -117,14 +123,16 @@ export class SocketGateway
       if (game.sabotage) {
         this.handleOnSabotage();
       }
-      if (this.gameService.winSaboteur() && game.start) {
-        this.handleVictory(RolePlayer.SABOTEUR);
-      } else if (this.gameService.winPlayers() && game.start) {
-        this.handleVictory(RolePlayer.PLAYER);
-      }
     });
   }
 
+  win(game: GameModel) {
+    if (this.gameService.winSaboteur() && game.start) {
+      this.handleVictory(RolePlayer.SABOTEUR);
+    } else if (this.gameService.winPlayers() && game.start) {
+      this.handleVictory(RolePlayer.PLAYER);
+    }
+  }
   @SubscribeMessage('getGameData')
   handleInitGame(@MessageBody() data: any) {
     this.logger.log('getGameData');
@@ -196,7 +204,6 @@ export class SocketGateway
   handleTaskSimonEnable() {
     this.logger.log('enableTaskSimon');
     this.server.emit('enableTaskSimon');
-    this.simonService.startSimon();
   }
 
   handleDisableTaskSimon() {
@@ -206,7 +213,10 @@ export class SocketGateway
 
   handleTaskCompletedSimon() {
     this.logger.log('taskCompletedSimon');
-    this.server.emit('taskCompletedSimon', this.game);
+    this.server.emit('taskCompletedSimon', {
+      game: this.game,
+      macPlayer: this.simonService.getMacPlayer(),
+    });
   }
 
   handleTaskLedSimon(led: string) {
@@ -234,7 +244,10 @@ export class SocketGateway
 
   handleTaskCompletedQrCode() {
     this.logger.log('taskCompletedQrCode');
-    this.server.emit('taskCompletedQrCode', this.game);
+    this.server.emit('taskCompletedQrCode', {
+      game: this.game,
+      macPlayer: this.qrCodeService.getMacPlayer(),
+    });
   }
 
   @SubscribeMessage('qrCodeScan')
@@ -257,7 +270,10 @@ export class SocketGateway
 
   handleTaskCompletedTaskCardSwip() {
     this.logger.log('taskCompletedTaskCardSwip');
-    this.server.emit('taskCompletedTaskCardSwip', this.game);
+    this.server.emit('taskCompletedTaskCardSwip', {
+      game: this.game,
+      macPlayer: this.cardSwipService.getMacPlayer(),
+    });
   }
 
   @SubscribeMessage('taskCardSwip')
@@ -268,10 +284,12 @@ export class SocketGateway
 
   @SubscribeMessage('startTask')
   handleStartTask(@MessageBody() data: { task: Task; player: Player }) {
+    this.logger.log('startTask', data);
     switch (data.task.mac) {
       case MAC.CARDSWIPE:
         if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
           this.handleEnableTaskCardSwip();
+          this.cardSwipService.startTask(data.player.mac);
         } else {
           this.server.emit('startTask', {
             CARDSWIPE: `${MAC.CARDSWIPE} is pending`,
@@ -281,6 +299,7 @@ export class SocketGateway
       case MAC.KEYCODE:
         if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
           this.handleEnableTaskKeyCode();
+          this.keycodeService.startKeyCode(data.player.mac);
         } else {
           this.server.emit('startTask', {
             KEYCODE: `${MAC.KEYCODE} is pending`,
@@ -290,6 +309,7 @@ export class SocketGateway
       case MAC.SIMON:
         if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
           this.handleTaskSimonEnable();
+          this.simonService.startSimon(data.player.mac);
         } else {
           this.server.emit('startTask', { SIMON: `${MAC.SIMON} is pending` });
         }
@@ -297,6 +317,7 @@ export class SocketGateway
       case MAC.QRCODE:
         if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
           this.handleEnableTaskQrCode();
+          this.qrCodeService.startTask(data.player.mac);
         } else {
           this.server.emit('startTask', { QRCODE: `${MAC.QRCODE} is pending` });
         }
@@ -304,41 +325,46 @@ export class SocketGateway
       case MAC.SOCLE:
         if (this.gameService.taskActivateByPlayer(data.task, data.player)) {
           this.handleEnableTaskSocle();
+          this.socleService.startSocle(data.player.mac);
         } else {
           this.server.emit('startTask', { SOCLE: `${MAC.SOCLE} is pending` });
         }
         break;
     }
-    this.logger.log('startTask', data);
   }
 
   @SubscribeMessage('stopTask')
   handleStopTask(@MessageBody() data: { task: Task; player: Player }) {
+    this.logger.log('stopTask', data);
     this.gameService.taskDesactivateByPlayer(data.task, data.player);
     switch (data.task.mac) {
       case MAC.CARDSWIPE:
         this.handleDisableTaskCardSwip();
+        this.cardSwipService.endTask();
         break;
       case MAC.KEYCODE:
         this.handleDisableTaskKeyCode();
+        this.keycodeService.endTask();
         break;
       case MAC.SIMON:
         this.handleDisableTaskSimon();
+        this.simonService.stopSimon();
         break;
       case MAC.QRCODE:
         this.handleDisableTaskQrCode();
+        this.qrCodeService.endTask();
         break;
       case MAC.SOCLE:
         this.handleDisableTaskSocle();
+        this.socleService.endTask();
         break;
     }
-    this.logger.log('stopTask', data);
+    this.win(this.game);
   }
 
   handleEnableTaskKeyCode() {
     this.logger.log('enableTaskKeyCode');
     this.server.emit('enableTaskKeyCode');
-    this.keycodeService.startKeyCode();
   }
 
   handleDisableTaskKeyCode() {
@@ -348,7 +374,10 @@ export class SocketGateway
 
   handleTaskCompletedKeyCode() {
     this.logger.log('taskCompletedTaskKeyCode');
-    this.server.emit('taskCompletedTaskKeyCode', this.game);
+    this.server.emit('taskCompletedTaskKeyCode', {
+      game: this.game,
+      macPlayer: this.cardSwipService.getMacPlayer(),
+    });
   }
 
   @SubscribeMessage('taskKeyCode')
@@ -368,6 +397,7 @@ export class SocketGateway
   handleDeathPlayer(@MessageBody() data: { mac: string }) {
     this.logger.log('deathPlayer', data);
     this.server.emit('deathPlayer', this.gameService.deathPlayer(data.mac));
+    this.win(this.game);
   }
 
   @SubscribeMessage('refresh')
@@ -378,11 +408,11 @@ export class SocketGateway
 
   @SubscribeMessage('buzzer')
   handleBuzzer(@MessageBody() data: { status: boolean }) {
-    const buzzer = this.gameService.buzzer();
+    this.gameService.buzzer();
     this.handleRefresh(this.gameService.getGame());
     this.logger.log('buzzer');
-    this.countDownMeeting(buzzer.status);
-    this.server.emit('buzzer', buzzer);
+    this.countDownMeeting(true);
+    this.server.emit('buzzer', this.game);
   }
 
   countDownMeeting(status: boolean): {
@@ -397,18 +427,22 @@ export class SocketGateway
         counter--;
         if (counter === 0) {
           const vote = this.gameService.mostPlayerVote(this.game.vote);
-          this.handleMeeting(counter, false, vote.mostPlayerVote, vote.count);
           if (vote.mostPlayerVote !== '') {
             const index = this.gameService.getIndexPlayer(vote.mostPlayerVote);
             const player = this.game.players[index];
             this.handleDeathPlayer({ mac: player.mac });
-            this.game.players.forEach((player) => {
-              if (!player.isAlive) {
-                this.server.emit('deadReport', { macDeadPlayer: player.mac });
-              }
-            });
           }
           this.gameService.resetVote();
+          this.game.players.forEach((playerCheck) => {
+            if (!playerCheck.isAlive) {
+              this.logger.log('deadReport', playerCheck.mac);
+              this.server.emit('deadReport', {
+                macDeadPlayer: playerCheck.mac,
+              });
+            }
+          });
+          this.handleMeeting(counter, false, vote.mostPlayerVote, vote.count);
+          this.win(this.game);
           clearInterval(functionCounter);
         }
       }, 1000);
@@ -462,12 +496,14 @@ export class SocketGateway
   ) {
     this.logger.log('timerTaskDone', data);
     this.gameService.timeDownTask(data.macTask, data.macPlayer);
+    this.win(this.game);
   }
 
   @SubscribeMessage('meeting')
   handleMeeting(counter: number, status: boolean, vote: string, count: number) {
     this.logger.log('meeting, { countDown: counter, status }');
     this.server.emit('meeting', {
+      game: this.game,
       countDown: counter,
       status,
       vote: vote,
@@ -478,7 +514,7 @@ export class SocketGateway
   @SubscribeMessage('report')
   handleReport(@MessageBody() data: { name: string; macDeadPlayer: string }) {
     this.logger.log('data name = ', data.name);
-    const report = this.gameService.report(data.name, data.macDeadPlayer);
+    const report = this.gameService.report(data.name);
     this.countDownMeeting(true);
     this.server.emit('report', report);
   }
@@ -550,12 +586,14 @@ export class SocketGateway
   private handleEnableTaskSocle() {
     this.logger.log('enableTaskSocle');
     this.server.emit('enableTaskSocle');
-    this.socleService.startSocle();
   }
 
   private handleTaskCompletedSocle() {
     this.logger.log('taskCompletedSocle');
-    this.server.emit('taskCompletedSocle', this.game);
+    this.server.emit('taskCompletedSocle', {
+      game: this.game,
+      macPlayer: this.socleService.getMacPlayer(),
+    });
   }
 
   @SubscribeMessage('taskSocle')

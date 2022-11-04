@@ -45,6 +45,34 @@ export interface GameModel {
   tasks: Tasks;
 }
 
+export const personalTask2: Task[] = [
+  {
+    name: 'Swiper la carte',
+    mac: 'CARDSWIPE',
+    accomplished: true,
+  },
+  {
+    name: 'Code à rentrer',
+    mac: 'KEYCODE',
+    accomplished: true,
+  },
+  {
+    name: 'Scanner le QR-CODE',
+    mac: 'QRCODE',
+    accomplished: true,
+  },
+  {
+    name: 'Réussir le Simon',
+    mac: 'SIMON',
+    accomplished: true,
+  },
+  {
+    name: 'Placer la pièce',
+    mac: 'SOCLE',
+    accomplished: true,
+  },
+];
+
 export const personalTask: Task[] = [
   {
     name: 'Swiper la carte',
@@ -92,24 +120,24 @@ export const initGame: GameModel = {
     isActive: false,
   },
   players: [
-    // {
-    //   name: 'Joueur 1',
-    //   mac: 'PLAYER1',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isDeadReport: false,
-    //   isAlive: true,
-    //   personalTasks: JSON.parse(JSON.stringify(personalTask)),
-    // },
-    // {
-    //   name: 'Joueur 2',
-    //   mac: 'PLAYER2',
-    //   role: RolePlayer.PLAYER,
-    //   hasReport: false,
-    //   isDeadReport: false,
-    //   isAlive: true,
-    //   personalTasks: JSON.parse(JSON.stringify(personalTask)),
-    // },
+    {
+      name: 'Joueur 1',
+      mac: 'PLAYER1',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isDeadReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask2)),
+    },
+    {
+      name: 'Joueur 2',
+      mac: 'PLAYER2',
+      role: RolePlayer.PLAYER,
+      hasReport: false,
+      isDeadReport: false,
+      isAlive: true,
+      personalTasks: JSON.parse(JSON.stringify(personalTask2)),
+    },
     // {
     //   name: 'Joueur 3',
     //   mac: 'PLAYER3',

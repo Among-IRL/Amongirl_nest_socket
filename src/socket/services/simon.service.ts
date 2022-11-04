@@ -24,13 +24,24 @@ export class SimonService {
   private countCheck: number;
   private winNumber = 50;
   private isEnable = false;
+  private macPlayer;
 
-  startSimon(): void {
+  startSimon(macPlayer: string): void {
+    this.macPlayer = macPlayer;
     this.robotChoice = '';
     this.humanChoice = '';
     this.countCheck = 0;
     this.isEnable = true;
     this.choiceRobot();
+  }
+
+  stopSimon(): void {
+    this.isEnable = false;
+    this.macPlayer = '';
+  }
+
+  getMacPlayer(): string {
+    return this.macPlayer;
   }
 
   choiceHuman(choice: string): void {
@@ -57,7 +68,7 @@ export class SimonService {
   private scoreIncrement(choice: string) {
     this.robotChoice === choice
       ? this.countCheck++
-      : (this.countCheck = this.countCheck - 5);
+      : (this.countCheck = this.countCheck - 3);
   }
 
   private intervalRobotChoice() {

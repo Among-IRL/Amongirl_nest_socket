@@ -40,8 +40,10 @@ export class KeyCodeService {
   private codeEntered: string[];
   private countCheck: number;
   private codeToSend: string[];
+  private macPlayer: string;
 
-  startKeyCode(): void {
+  startKeyCode(macPlayer: string): void {
+    this.macPlayer = macPlayer;
     this.codeArray = [];
     this.codeEntered = [];
     this.countCheck = 0;
@@ -56,7 +58,6 @@ export class KeyCodeService {
         listKeyValues[Math.floor(Math.random() * (12 - 0 + 1))],
       );
     }
-    console.log('CODE TO FOUND = ', this.codeArray);
     this.subjectCodeToFound.next(this.codeToSend);
   }
 
@@ -80,7 +81,16 @@ export class KeyCodeService {
     }
   }
 
-  endGame() {
+  private endGame() {
     this.subjectTaskCompleted.next(true);
+  }
+
+  getMacPlayer(): string {
+    return this.macPlayer;
+  }
+
+  endTask() {
+    this.macPlayer = '';
+    this.codeArray = [];
   }
 }
